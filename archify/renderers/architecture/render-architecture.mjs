@@ -983,11 +983,21 @@ function renderComponent(c) {
   const accent = componentText[c.type] || 't-muted';
   const cx = c.cx;
   const hasSub = c.sublabel != null && c.sublabel !== '';
-  const labelY = hasSub ? c.y + c.height / 2 - 2 : c.y + c.height / 2 + 4;
+  const hasTag = c.tag != null && c.tag !== '';
+  const midY = c.y + c.height / 2;
+  // Short nodes with both sublabel and tag used to pin the tag at bottom−8 while
+  // centering the label/sub pair — baselines could sit only ~6px apart (e.g. h=56).
+  // Shift the pair up when a tag is present so the three lines keep clear gaps.
+  const labelY = hasSub
+    ? (hasTag ? midY - 10 : midY - 2)
+    : midY + 4;
+  const subY = hasSub
+    ? (hasTag ? midY + 6 : midY + 14)
+    : null;
   const sub = hasSub
-    ? `\n        <text data-detail="context" x="${cx}" y="${c.y + c.height / 2 + 14}" class="t-muted" font-size="${fittedNodeFontSize(c.sublabel, c.width, componentTextFit.sublabelPreferred, componentTextFit.sublabelMinimum)}" text-anchor="middle">${esc(c.sublabel)}</text>`
+    ? `\n        <text data-detail="context" x="${cx}" y="${subY}" class="t-muted" font-size="${fittedNodeFontSize(c.sublabel, c.width, componentTextFit.sublabelPreferred, componentTextFit.sublabelMinimum)}" text-anchor="middle">${esc(c.sublabel)}</text>`
     : '';
-  const tag = c.tag
+  const tag = hasTag
     ? `\n        <text data-detail="fine" x="${cx}" y="${c.y + c.height - 8}" class="${accent}" font-size="${fittedNodeFontSize(c.tag, c.width, componentTextFit.tagPreferred, componentTextFit.tagMinimum)}" text-anchor="middle">${esc(c.tag)}</text>`
     : '';
   const brand = renderBrandMark(c, { x: c.x + c.width - 22, y: c.y + 6 });
