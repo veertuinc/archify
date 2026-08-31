@@ -18,10 +18,10 @@ Align Archify diagrams and Anka docs use-case SVGs with Veertu/Anka brand stylin
 
 | Role | Hex |
 |------|-----|
-| Primary | `#60259F` |
-| Accent | `#EA1D76` |
-| Docs purple | `#624495` |
-| Connector | `#30638E` |
+| Primary (backend) | `#60259F` |
+| Accent (security) | `#EA1D76` |
+| Database | `#0D9488` (teal; not docs purple — that was too close to primary) |
+| Connector / frontend | `#30638E` |
 | Canvas | `#F4F1F8` |
 | Ink | `#1F1630` |
 | Soft node | `#eef2ff` |
