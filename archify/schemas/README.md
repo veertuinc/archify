@@ -27,10 +27,12 @@ suffix, and `<html lang>` value; it does not translate authored strings.
 Omitting it preserves legacy behavior and resolves to English. Unsupported
 locale values fail schema validation instead of being guessed or silently
 rewritten.
-`visual_preset` accepts `classic` (the stable default), `signal-flow` (luminous
-motion-forward presentation), `blueprint` (high-contrast engineering review),
-or `editorial` (warm publication-style design review and documentation).
+`visual_preset` accepts `veertu` (Anka / Veertu brand default), `classic`
+(midnight evidence console), `signal-flow` (luminous motion-forward
+presentation), `blueprint` (high-contrast engineering review), or `editorial`
+(warm publication-style design review and documentation).
 Presets change only viewer styling; they do not alter semantic IDs or geometry.
+Every delivered diagram SVG also includes a bottom-right Veertu atom watermark.
 Sequence `meta` additionally accepts `column_fit`. The default `fixed` keeps
 the historical 108px column gap and 86px participant boxes, so an authored
 diagram renders at the same coordinates no matter how wide its viewBox is.

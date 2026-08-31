@@ -84,6 +84,61 @@ export const TOOLS = [
       additionalProperties: false,
     },
   },
+  {
+    name: 'export_diagram',
+    description:
+      'Export a delivered library diagram (viewer export menu). '
+      + 'Formats: svg, png, jpeg, webp, webm, share-card, route-share-card, reach-share-card. '
+      + 'Optional outputPath under docs/ or var/library/exports/; otherwise returns base64.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', description: 'Diagram id.' },
+        format: {
+          type: 'string',
+          enum: [
+            'svg',
+            'png',
+            'jpeg',
+            'webp',
+            'webm',
+            'share-card',
+            'route-share-card',
+            'reach-share-card',
+          ],
+        },
+        outputPath: {
+          type: 'string',
+          description: 'Optional write path under docs/ or var/library/exports/.',
+        },
+        includeBase64: {
+          type: 'boolean',
+          description: 'When outputPath is set, also include base64 (default false).',
+        },
+        route: {
+          type: 'object',
+          description: 'Required for route-share-card.',
+          properties: {
+            source: { type: 'string' },
+            target: { type: 'string' },
+          },
+          additionalProperties: false,
+        },
+        reach: {
+          type: 'object',
+          description: 'Required for reach-share-card.',
+          properties: {
+            nodeId: { type: 'string' },
+            direction: { type: 'string' },
+          },
+          additionalProperties: false,
+        },
+        theme: { type: 'string', description: 'Optional viewer theme.' },
+      },
+      required: ['id', 'format'],
+      additionalProperties: false,
+    },
+  },
 ];
 
 export function textResult(payload, isError = false) {
@@ -143,6 +198,15 @@ export function createToolCaller(api, baseLabel = '') {
       }
       case 'delete_diagram':
         return textResult(await api('DELETE', `/api/diagrams/${encodeURIComponent(args.id)}`));
+      case 'export_diagram': {
+        const body = { format: args.format };
+        if (args.outputPath) body.outputPath = args.outputPath;
+        if (args.includeBase64 === true) body.includeBase64 = true;
+        if (args.route) body.route = args.route;
+        if (args.reach) body.reach = args.reach;
+        if (args.theme) body.theme = args.theme;
+        return textResult(await api('POST', `/api/diagrams/${encodeURIComponent(args.id)}/export`, body));
+      }
       default:
         return textResult({ error: 'unknown_tool', name }, true);
     }

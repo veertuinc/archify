@@ -14,6 +14,12 @@ import {
   createToolCaller,
   handleJsonRpc,
 } from './lib/archify-mcp-core.mjs';
+import { ExportPathError, resolveExportOutputPath } from './lib/archify-export-path.mjs';
+import {
+  EXPORT_FORMATS,
+  HeadlessExportError,
+  exportDiagramArtifact,
+} from './lib/archify-headless-export.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
@@ -266,6 +272,19 @@ function apiCatalog() {
         path: '/api/diagrams/{id}',
         description: 'Delete source, artifact, and manifest entry.',
       },
+      {
+        method: 'POST',
+        path: '/api/diagrams/{id}/export',
+        description: 'Export a delivered diagram via headless Chrome (viewer export menu).',
+        body: {
+          format: EXPORT_FORMATS.join('|'),
+          outputPath: 'string (optional; under docs/ or var/library/exports/)',
+          includeBase64: 'boolean (optional; default false when outputPath set)',
+          route: '{ source, target } (required for route-share-card)',
+          reach: '{ nodeId, direction } (required for reach-share-card)',
+          theme: 'string (optional)',
+        },
+      },
     ],
     mcp: {
       streamableHttp: {
@@ -288,7 +307,12 @@ const mcpSessions = new Map();
 function mcpInstructions() {
   return (
     `Archify library MCP (Streamable HTTP on /mcp). No auth in v1 — private network only. `
-    + `REST API on the same origin. Stdio client: scripts/archify-mcp.mjs`
+    + `REST API on the same origin. Stdio client: scripts/archify-mcp.mjs `
+    + `Create or update a diagram before export_diagram if the artifact is missing. `
+    + `export_diagram formats: ${EXPORT_FORMATS.join(', ')}. `
+    + `Prefer outputPath under docs/ for documentation assets; omit it to receive base64. `
+    + `route-share-card needs route:{source,target}; reach-share-card needs reach:{nodeId,direction}. `
+    + `WebM needs Chrome with MediaRecorder; set ARCHIFY_CHROME if needed.`
   );
 }
 
@@ -434,6 +458,79 @@ async function handleApi(req, res, url) {
 
   if (method === 'GET' && url.pathname === '/api/templates') {
     return send(res, 200, { templates: await listTemplates() });
+  }
+
+  const exportMatch = url.pathname.match(/^\/api\/diagrams\/([a-z0-9][a-z0-9-]{0,62})\/export$/);
+  if (exportMatch && method === 'POST') {
+    const id = exportMatch[1];
+    const manifest = await loadManifest();
+    const entry = manifest.entries.find((e) => e.id === id);
+    if (!entry) return send(res, 404, { error: 'not_found' });
+
+    const artifactAbs = path.join(LIBRARY, entry.artifact);
+    if (!fs.existsSync(artifactAbs)) {
+      return send(res, 404, { error: 'artifact_missing' });
+    }
+
+    const body = await readBody(req);
+    if (!body || typeof body.format !== 'string') {
+      return send(res, 400, { error: 'format_required', formats: [...EXPORT_FORMATS] });
+    }
+    if (!EXPORT_FORMATS.includes(body.format)) {
+      return send(res, 400, { error: 'bad_format', formats: [...EXPORT_FORMATS] });
+    }
+
+    let resolvedPath = null;
+    if (body.outputPath) {
+      try {
+        resolvedPath = resolveExportOutputPath(ROOT, body.outputPath);
+      } catch (err) {
+        if (err instanceof ExportPathError) {
+          return send(res, 400, { error: err.code, message: err.message });
+        }
+        throw err;
+      }
+    }
+
+    const artifactUrl = `http://127.0.0.1:${PORT}/library/${entry.artifact.split(path.sep).join('/')}`;
+    let exported;
+    try {
+      exported = await exportDiagramArtifact({
+        artifactUrl,
+        format: body.format,
+        route: body.route,
+        reach: body.reach,
+        theme: body.theme,
+      });
+    } catch (err) {
+      if (err instanceof HeadlessExportError) {
+        return send(res, err.status, {
+          error: err.code,
+          message: err.message,
+        });
+      }
+      throw err;
+    }
+
+    const includeBase64 = resolvedPath
+      ? body.includeBase64 === true
+      : true;
+
+    if (resolvedPath) {
+      await fsp.mkdir(path.dirname(resolvedPath.absolute), { recursive: true });
+      await fsp.writeFile(resolvedPath.absolute, exported.buffer);
+    }
+
+    const response = {
+      ok: true,
+      id,
+      format: exported.format,
+      mimeType: exported.mimeType,
+      bytes: exported.bytes,
+      path: resolvedPath ? resolvedPath.relative : null,
+    };
+    if (includeBase64) response.base64 = exported.buffer.toString('base64');
+    return send(res, 200, response);
   }
 
   const one = url.pathname.match(/^\/api\/diagrams\/([a-z0-9][a-z0-9-]{0,62})$/);

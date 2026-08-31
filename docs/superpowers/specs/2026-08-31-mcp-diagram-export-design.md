@@ -16,7 +16,7 @@ Agents regenerate documentation images through the library. They pick any viewer
 | Formats (v1) | Full viewer menu: `svg`, `png`, `jpeg`, `webp`, `webm`, `share-card`, `route-share-card`, `reach-share-card` |
 | Delivery | Optional `outputPath` write **or** base64 in response (both supported) |
 | Source | Existing library diagram with delivered HTML only |
-| Host deps | Chrome/Chromium required; ffmpeg required for `webm` |
+| Host deps | Chrome/Chromium required; WebM needs MediaRecorder in that Chrome session |
 | Auth | Unchanged — none in v1; private network only |
 
 ## Architecture
@@ -85,7 +85,8 @@ Scripts / CI (REST)     ──┼──► POST /api/diagrams/{id}/export
 | 404 | Unknown id or missing artifact |
 | 400 | Bad format, bad path, or missing/invalid `route` / `reach` |
 | 422 | Viewer export failed (message + viewer error attrs when present) |
-| 503 | Chrome missing, or ffmpeg missing for `webm` |
+| 503 | Chrome missing |
+| 422 | Viewer export failed, or WebM unavailable (no MediaRecorder) |
 
 Register the endpoint on `GET /api`.
 
@@ -101,7 +102,7 @@ Update Streamable HTTP / stdio instructions:
 2. Choose `format` from the full menu.
 3. Prefer `outputPath` under `docs/` for documentation assets; use base64 only when the agent must handle bytes itself.
 4. `route-share-card` / `reach-share-card` require `route` / `reach`.
-5. WebM needs Chrome and ffmpeg on the library host.
+5. WebM needs Chrome with MediaRecorder on the library host.
 
 Formats appear in the tool schema enum and in `describe_api`. No separate list-formats tool.
 
@@ -118,7 +119,7 @@ Responsibilities:
 5. Capture bytes:
    - Prefer calling `Archify.exportMenu` APIs that return blobs (`run`, `shareCard`, route/reach helpers) and convert blob → base64 in-page, then return to Node.
    - Avoid relying on browser download UI.
-6. For `webm`, require ffmpeg availability consistent with existing motion capture paths; surface 503 if missing.
+6. For `webm`, fail clearly when `Archify.motion.canRecord()` is false (headless MediaRecorder).
 7. Tear down Chrome cleanly; timeout bounded (e.g. 60s default, longer for webm).
 
 Do not duplicate export geometry logic in Node — the viewer remains the source of truth.

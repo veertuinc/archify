@@ -52,10 +52,11 @@ test('static output omits animation attributes', () => {
   assert.doesNotMatch(svg, /data-animate=/);
 });
 
-test('classic preset remains the default for existing diagrams', () => {
+test('veertu preset is the default for existing diagrams', () => {
   const html = render('architecture', CASES.architecture, null, null);
-  assert.match(html, /<html lang="en" data-theme="dark" data-preset="classic">/);
-  assert.match(svgBlock(html), /data-preset="classic"/);
+  assert.match(html, /<html lang="en" data-theme="dark" data-preset="veertu">/);
+  assert.match(svgBlock(html), /data-preset="veertu"/);
+  assert.match(svgBlock(html), /class="veertu-watermark"/);
 });
 
 test('signal-flow preset reaches the page, SVG, and motion export surface', () => {

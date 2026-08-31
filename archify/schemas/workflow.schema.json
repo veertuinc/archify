@@ -49,12 +49,7 @@
           ]
         },
         "visual_preset": {
-          "enum": [
-            "classic",
-            "signal-flow",
-            "blueprint",
-            "editorial"
-          ]
+          "$ref": "common.schema.json#/$defs/visualPreset"
         },
         "quality_profile": {
           "enum": [

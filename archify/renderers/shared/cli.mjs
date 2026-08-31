@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { applyTemplate, renderCards, esc } from './utils.mjs';
+import { injectVeertuWatermark, VEERTU_DEFAULT_PRESET } from './veertu-watermark.mjs';
 import { validateSchema } from './validator.mjs';
 import { verifyRepositoryEvidence } from './repository-evidence.mjs';
 import { installRendererDiagnosticBoundary, throwDiagnosticProblems } from './diagnostics.mjs';
@@ -58,10 +59,10 @@ export function writeDiagram({ outPath, template, diagramType, meta, svg, cards,
   fs.writeFileSync(outPath, applyTemplate(template, {
     title: meta.title,
     subtitle: meta.subtitle,
-    svg,
+    svg: injectVeertuWatermark(svg),
     cards: renderCards(cards),
     locale: meta.locale,
-    visualPreset: meta.visual_preset || 'classic',
+    visualPreset: meta.visual_preset || VEERTU_DEFAULT_PRESET,
     guidedViews: meta.views || [],
     sourceEvidence,
   }));
@@ -148,7 +149,7 @@ export function validateGuidedViews(diagramType, diagram) {
 // Accessible name for the generated diagram SVG.
 export function svgRootAttrs(meta) {
   const animation = meta.animation === 'trace' ? ' data-animation="trace"' : '';
-  const preset = ` data-preset="${esc(meta.visual_preset || 'classic')}"`;
+  const preset = ` data-preset="${esc(meta.visual_preset || VEERTU_DEFAULT_PRESET)}"`;
   const engineeringProfile = meta.engineering_profile
     ? ` data-engineering-profile="${esc(meta.engineering_profile)}"`
     : '';

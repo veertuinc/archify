@@ -46,7 +46,7 @@ test('all five renderers expose one reader-controlled visual style picker', () =
     assert.match(html, /id="preset-label"/, mode);
     assert.match(html, /title="Choose visual style \(S cycles\)"/, mode);
     assert.match(html, /id="preset-menu" role="menu" aria-label="Visual style"/, mode);
-    for (const preset of ['classic', 'signal-flow', 'blueprint', 'editorial']) {
+    for (const preset of ['veertu', 'classic', 'signal-flow', 'blueprint', 'editorial']) {
       assert.match(html, new RegExp(`data-preset-value="${preset}"[^>]+role="menuitemradio"`), `${mode}: ${preset}`);
     }
     assert.match(html, /Archify\.preset = \(function \(\)/, mode);
@@ -57,7 +57,7 @@ test('all five renderers expose one reader-controlled visual style picker', () =
 test('style selection synchronizes page, picker, and canonical SVG without touching geometry', () => {
   const html = render('architecture');
   const runtime = presetRuntime(html);
-  assert.match(runtime, /\['classic', 'signal-flow', 'blueprint', 'editorial'\]/);
+  assert.match(runtime, /\['veertu', 'classic', 'signal-flow', 'blueprint', 'editorial'\]/);
   assert.match(runtime, /html\.setAttribute\('data-preset', preset\)/);
   assert.match(runtime, /svg\.setAttribute\('data-preset', preset\)/);
   assert.match(runtime, /data-preset-option/);
@@ -65,11 +65,12 @@ test('style selection synchronizes page, picker, and canonical SVG without touch
   assert.match(runtime, /return \{ cycle: cycle, apply: apply, current: current, authored: authored, open: open, close: close, isOpen: isOpen \}/);
 });
 
-test('omitted visual preset opens as Classic and theme switching cannot change it', () => {
+test('omitted visual preset opens as Veertu and theme switching cannot change it', () => {
   const html = render('architecture');
   const themeRuntime = html.match(/Archify\.theme = \(function \(\) \{[\s\S]*?\n    \}\)\(\);/)?.[0] || '';
-  assert.match(html, /<html lang="en" data-theme="dark" data-preset="classic">/);
-  assert.match(svgBlock(html), /<svg\b[^>]* data-preset="classic"/);
+  assert.match(html, /<html lang="en" data-theme="dark" data-preset="veertu">/);
+  assert.match(svgBlock(html), /<svg\b[^>]* data-preset="veertu"/);
+  assert.match(svgBlock(html), /class="veertu-watermark"/);
   assert.match(themeRuntime, /html\.setAttribute\('data-theme', theme\)/);
   assert.doesNotMatch(themeRuntime, /data-preset|Archify\.preset/);
 });
@@ -102,12 +103,13 @@ test('style try-on is session-only and unavailable to passive embeds', () => {
   assert.match(html, /@media print/);
 });
 
-test('same topology keeps identical canonical SVG geometry across all four styles', () => {
-  const normalize = (svg) => svg.replace(/ data-preset="(?:classic|signal-flow|blueprint|editorial)"/, '');
-  const variants = ['classic', 'signal-flow', 'blueprint', 'editorial'].map((preset) => normalize(svgBlock(render('architecture', preset))));
+test('same topology keeps identical canonical SVG geometry across all five styles', () => {
+  const normalize = (svg) => svg.replace(/ data-preset="(?:veertu|classic|signal-flow|blueprint|editorial)"/, '');
+  const variants = ['veertu', 'classic', 'signal-flow', 'blueprint', 'editorial'].map((preset) => normalize(svgBlock(render('architecture', preset))));
   assert.equal(variants[1], variants[0]);
   assert.equal(variants[2], variants[0]);
   assert.equal(variants[3], variants[0]);
+  assert.equal(variants[4], variants[0]);
 });
 
 process.on('exit', () => fs.rmSync(tmp, { recursive: true, force: true }));

@@ -87,7 +87,9 @@ components:
 
 Archify is a composed technical instrument, not a drawing suite. The canvas carries one spatial narrative; restrained controls and progressive disclosure let a reader move from the primary path to exact authored relationships, metadata, and verified code evidence without losing orientation.
 
-The visual system is precise, dark-first, and vivid only where semantics earn it. Light mode and Blueprint preserve the same vocabulary rather than becoming separate products. Motion has one bounded owner, finishes, and never carries meaning that disappears in a still frame. Desktop is the primary surface; narrow screens receive containment, not a second interface.
+The default delivered look is the **Veertu** visual preset (light-first Anka / Veertu brand tokens, Museo Sans Rounded, bottom-right atom watermark). Classic / Signal Flow / Blueprint / Editorial remain available as session try-on styles. Classic stays the dark midnight console vocabulary described below.
+
+The visual system is precise. Classic is dark-first and vivid only where semantics earn it. Light mode and Blueprint preserve the same vocabulary rather than becoming separate products. Motion has one bounded owner, finishes, and never carries meaning that disappears in a still frame. Desktop is the primary surface; narrow screens receive containment, not a second interface.
 
 **Key Characteristics:**
 

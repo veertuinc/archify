@@ -25,7 +25,10 @@
           try { theme = localStorage.getItem('archify-theme'); } catch (_) {}
         }
         if (theme !== 'light' && theme !== 'dark') {
-          theme = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+          // Veertu preset is light-first; other presets follow OS preference.
+          var preset = document.documentElement.getAttribute('data-preset');
+          if (preset === 'veertu') theme = 'light';
+          else theme = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
         }
         document.documentElement.setAttribute('data-theme', theme);
       } catch (_) {}
@@ -39,6 +42,23 @@
   <noscript>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   </noscript>
+  <!-- Veertu / Anka brand font (same files as veertu.com). Swap keeps first paint unblocked. -->
+  <style>
+    @font-face {
+      font-family: 'Museo Sans Rounded';
+      src: url('https://veertu.com/wp-content/uploads/2020/07/MuseoSansRounded_300.woff2') format('woff2');
+      font-weight: 300;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: 'Museo Sans Rounded';
+      src: url('https://veertu.com/wp-content/uploads/2020/07/MuseoSansRounded_500.woff2') format('woff2');
+      font-weight: 500;
+      font-style: normal;
+      font-display: swap;
+    }
+  </style>
   <style>
     /* ==========================================================
        THEME VARIABLES — switch by toggling [data-theme] on <html>
@@ -125,6 +145,80 @@
       --toolbar-text:     #334155;
       --toolbar-hover:    #ffffff;
       --toolbar-menu-bg:  #ffffff;
+    }
+
+    /* ==========================================================
+       VEERTU — Anka / Veertu brand default (light-first).
+       Tokens align with docs.veertu.com and veertu.com.
+       ========================================================== */
+    [data-preset="veertu"][data-theme="light"] {
+      --bg: #F4F1F8;
+      --grid: #e0d6ec;
+      --panel: rgba(255, 255, 255, 0.92);
+      --panel-border: #d4c6e8;
+      --lane-fill: rgba(238, 242, 255, 0.65);
+      --lane-stroke: #b8a3d4;
+      --text: #1F1630;
+      --text-muted: #5c5270;
+      --text-dim: #8a8199;
+      --text-faint: #6f6680;
+      --mask: #ffffff;
+      --frontend-fill: rgba(48, 99, 142, 0.1);
+      --frontend-stroke: #30638E;
+      --backend-fill: rgba(96, 37, 159, 0.12);
+      --backend-stroke: #60259F;
+      --database-fill: rgba(98, 68, 149, 0.12);
+      --database-stroke: #624495;
+      --cloud-fill: rgba(114, 161, 229, 0.14);
+      --cloud-stroke: #4A7BC8;
+      --security-fill: rgba(234, 29, 118, 0.1);
+      --security-stroke: #EA1D76;
+      --messagebus-fill: rgba(226, 30, 121, 0.1);
+      --messagebus-stroke: #e21e79;
+      --external-fill: rgba(77, 72, 87, 0.1);
+      --external-stroke: #6b6578;
+      --arrow: #8a8199;
+      --arrow-emphasis: #EA1D76;
+      --toolbar-bg: rgba(255, 255, 255, 0.94);
+      --toolbar-border: #d4c6e8;
+      --toolbar-text: #3d3450;
+      --toolbar-hover: #ffffff;
+      --toolbar-menu-bg: #ffffff;
+    }
+
+    [data-preset="veertu"][data-theme="dark"] {
+      --bg: #1F1630;
+      --grid: #3a2f52;
+      --panel: rgba(42, 15, 74, 0.72);
+      --panel-border: #4A1F7A;
+      --lane-fill: rgba(74, 31, 122, 0.28);
+      --lane-stroke: #6b4a9a;
+      --text: #F8F6FB;
+      --text-muted: #c4b8d8;
+      --text-dim: #8a7aa8;
+      --text-faint: #a898c0;
+      --mask: #2a0f4a;
+      --frontend-fill: rgba(48, 99, 142, 0.22);
+      --frontend-stroke: #72A1E5;
+      --backend-fill: rgba(96, 37, 159, 0.28);
+      --backend-stroke: #b794f6;
+      --database-fill: rgba(98, 68, 149, 0.26);
+      --database-stroke: #a78bfa;
+      --cloud-fill: rgba(114, 161, 229, 0.18);
+      --cloud-stroke: #93c5fd;
+      --security-fill: rgba(234, 29, 118, 0.2);
+      --security-stroke: #f472b6;
+      --messagebus-fill: rgba(226, 30, 121, 0.18);
+      --messagebus-stroke: #fb7185;
+      --external-fill: rgba(148, 163, 184, 0.16);
+      --external-stroke: #94a3b8;
+      --arrow: #8a7aa8;
+      --arrow-emphasis: #EA1D76;
+      --toolbar-bg: rgba(42, 15, 74, 0.88);
+      --toolbar-border: #4A1F7A;
+      --toolbar-text: #F8F6FB;
+      --toolbar-hover: rgba(74, 31, 122, 0.95);
+      --toolbar-menu-bg: #2a0f4a;
     }
 
     /* ==========================================================
@@ -357,6 +451,30 @@
       padding: 2rem;
       color: var(--text);
       transition: background 0.2s ease, color 0.2s ease;
+    }
+
+    html[data-preset="veertu"] .header-row::after {
+      content: attr(data-preset-badge-veertu);
+      margin-left: auto;
+      color: #EA1D76;
+      border: 1px solid #EA1D76;
+      border-radius: 999px;
+      padding: 0.28rem 0.6rem;
+      font-size: 0.625rem;
+      letter-spacing: 0.12em;
+      opacity: 0.9;
+      white-space: nowrap;
+    }
+
+    html[data-preset="veertu"] body,
+    html[data-preset="veertu"] .diagram-container svg text,
+    html[data-preset="veertu"] .diagram-container svg .t-primary,
+    html[data-preset="veertu"] .diagram-container svg .t-muted {
+      font-family: 'Museo Sans Rounded', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    }
+
+    .veertu-watermark {
+      pointer-events: none;
     }
 
     html[data-preset="signal-flow"] body {
@@ -619,6 +737,7 @@
 
     .header { margin-bottom: 1.5rem; padding-right: 29.5rem; }
 
+    html[data-preset="veertu"] .header,
     html[data-preset="signal-flow"] .header,
     html[data-preset="blueprint"] .header,
     html[data-preset="editorial"] .header { padding-right: 29.5rem; }
@@ -3259,6 +3378,27 @@
       border-radius: 0.16rem;
       background: rgba(34, 211, 238, 0.14);
     }
+    .preset-option-swatch.veertu {
+      border-color: #60259F;
+      background: #F4F1F8;
+    }
+    .preset-option-swatch.veertu::before {
+      top: 0.38rem;
+      right: 0.32rem;
+      bottom: 0.38rem;
+      left: 0.32rem;
+      border: 1px solid #60259F;
+      border-radius: 0.16rem;
+      background: rgba(96, 37, 159, 0.14);
+    }
+    .preset-option-swatch.veertu::after {
+      top: 0.62rem;
+      left: 0.82rem;
+      width: 0.38rem;
+      height: 0.38rem;
+      border-radius: 50%;
+      background: #EA1D76;
+    }
     .preset-option-swatch.signal-flow {
       border-color: #29415f;
       background: linear-gradient(135deg, #07101e 10%, #10243c 100%);
@@ -4874,6 +5014,11 @@
       </button>
       <div class="preset-menu" id="preset-menu" role="menu" aria-label="{{i18n:viewer.preset.menu}}">
         <div class="preset-menu-heading" role="presentation"><span>{{i18n:viewer.preset.identity}}</span><span>{{i18n:viewer.preset.cycles}}</span></div>
+        <button class="preset-option" data-preset-value="veertu" type="button" role="menuitemradio" aria-checked="false" tabindex="-1">
+          <span class="preset-option-swatch veertu" aria-hidden="true"></span>
+          <span class="preset-option-copy"><strong>{{i18n:viewer.preset.veertu}}</strong><small>{{i18n:viewer.preset.veertu.hint}}</small></span>
+          <span class="preset-option-check" aria-hidden="true"></span>
+        </button>
         <button class="preset-option" data-preset-value="classic" type="button" role="menuitemradio" aria-checked="false" tabindex="-1">
           <span class="preset-option-swatch classic" aria-hidden="true"></span>
           <span class="preset-option-copy"><strong>{{i18n:viewer.preset.classic}}</strong><small>{{i18n:viewer.preset.classic.hint}}</small></span>
@@ -4951,6 +5096,7 @@
     <!-- Header -->
     <div class="header">
       <div class="header-row"
+           data-preset-badge-veertu="{{i18n:viewer.preset.badge.veertu}}"
            data-preset-badge-signal-flow="{{i18n:viewer.preset.badge.signalFlow}}"
            data-preset-badge-blueprint="{{i18n:viewer.preset.badge.blueprint}}"
            data-preset-badge-editorial="{{i18n:viewer.preset.badge.editorial}}">
@@ -5443,8 +5589,9 @@
        URL, or a later diagram's authored default.
        ============================================================ */
     Archify.preset = (function () {
-      var PRESETS = ['classic', 'signal-flow', 'blueprint', 'editorial'];
+      var PRESETS = ['veertu', 'classic', 'signal-flow', 'blueprint', 'editorial'];
       var LABELS = {
+        veertu: viewerText('viewer.preset.veertu.short'),
         classic: viewerText('viewer.preset.classic.short'),
         'signal-flow': viewerText('viewer.preset.flow.short'),
         blueprint: viewerText('viewer.preset.blueprint'),
@@ -5460,7 +5607,7 @@
       };
       var authored = PRESETS.indexOf(html.getAttribute('data-preset')) >= 0
         ? html.getAttribute('data-preset')
-        : 'classic';
+        : 'veertu';
 
       function current() {
         var value = html.getAttribute('data-preset');
