@@ -6,8 +6,14 @@ import http from 'node:http';
 import fs from 'node:fs';
 import fsp from 'node:fs/promises';
 import path from 'node:path';
+import { randomUUID } from 'node:crypto';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import {
+  createHttpApi,
+  createToolCaller,
+  handleJsonRpc,
+} from './lib/archify-mcp-core.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
@@ -262,10 +268,152 @@ function apiCatalog() {
       },
     ],
     mcp: {
-      script: 'scripts/archify-mcp.mjs',
-      env: { ARCHIFY_API_BASE: 'http://127.0.0.1:8787' },
+      streamableHttp: {
+        path: '/mcp',
+        urlHint: `http://${HOST === '0.0.0.0' ? '127.0.0.1' : HOST}:${PORT}/mcp`,
+        methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
+        note: 'Remote Cursor config: { "url": "http://HOST:PORT/mcp" }. No SSH needed.',
+      },
+      stdio: {
+        script: 'scripts/archify-mcp.mjs',
+        env: { ARCHIFY_API_BASE: 'http://127.0.0.1:8787' },
+      },
     },
   };
+}
+
+/** MCP Streamable HTTP sessions (sessionId → metadata). */
+const mcpSessions = new Map();
+
+function mcpInstructions() {
+  return (
+    `Archify library MCP (Streamable HTTP on /mcp). No auth in v1 — private network only. `
+    + `REST API on the same origin. Stdio client: scripts/archify-mcp.mjs`
+  );
+}
+
+function writeSseMessage(res, message) {
+  res.write(`event: message\ndata: ${JSON.stringify(message)}\n\n`);
+}
+
+function mcpJsonHeaders(sessionId, extra = {}) {
+  const headers = {
+    'Content-Type': 'application/json; charset=utf-8',
+    'Cache-Control': 'no-cache',
+    ...extra,
+  };
+  if (sessionId) headers['Mcp-Session-Id'] = sessionId;
+  return headers;
+}
+
+async function handleMcpHttp(req, res, url) {
+  const method = req.method || 'GET';
+  const loopbackBase = `http://127.0.0.1:${PORT}`;
+  const callTool = createToolCaller(createHttpApi(loopbackBase), loopbackBase);
+
+  if (method === 'OPTIONS') {
+    res.writeHead(204, {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Accept, Mcp-Session-Id, MCP-Protocol-Version',
+      'Access-Control-Expose-Headers': 'Mcp-Session-Id',
+    });
+    res.end();
+    return;
+  }
+
+  if (method === 'DELETE') {
+    const sid = req.headers['mcp-session-id'];
+    if (sid) mcpSessions.delete(String(sid));
+    res.writeHead(200, mcpJsonHeaders(sid || undefined, { 'Access-Control-Allow-Origin': '*' }));
+    res.end(JSON.stringify({ ok: true }));
+    return;
+  }
+
+  if (method === 'GET') {
+    const sid = req.headers['mcp-session-id'];
+    if (!sid || !mcpSessions.has(String(sid))) {
+      return send(res, 400, { error: 'session_required', hint: 'POST initialize first; send Mcp-Session-Id' });
+    }
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream; charset=utf-8',
+      'Cache-Control': 'no-cache, no-transform',
+      Connection: 'keep-alive',
+      'Mcp-Session-Id': String(sid),
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Expose-Headers': 'Mcp-Session-Id',
+    });
+    res.write(': connected\n\n');
+    const keep = setInterval(() => {
+      if (!res.writableEnded) res.write(': ping\n\n');
+    }, 25000);
+    const cleanup = () => clearInterval(keep);
+    req.on('close', cleanup);
+    res.on('close', cleanup);
+    return;
+  }
+
+  if (method !== 'POST') {
+    return send(res, 405, { error: 'method_not_allowed' });
+  }
+
+  let body;
+  try {
+    body = await readBody(req);
+  } catch {
+    return send(res, 400, { error: 'invalid_json' });
+  }
+  if (body == null) return send(res, 400, { error: 'body_required' });
+
+  const messages = Array.isArray(body) ? body : [body];
+  const accept = String(req.headers.accept || '');
+  const wantsSse = accept.includes('text/event-stream');
+  let sessionId = req.headers['mcp-session-id'] ? String(req.headers['mcp-session-id']) : null;
+
+  const isInit = messages.some((m) => m && m.method === 'initialize');
+  if (isInit) {
+    sessionId = randomUUID();
+    mcpSessions.set(sessionId, { createdAt: Date.now() });
+  } else if (sessionId && !mcpSessions.has(sessionId)) {
+    mcpSessions.set(sessionId, { createdAt: Date.now() });
+  } else if (!sessionId) {
+    sessionId = randomUUID();
+    mcpSessions.set(sessionId, { createdAt: Date.now() });
+  }
+
+  const responses = [];
+  for (const msg of messages) {
+    const out = await handleJsonRpc(msg, {
+      callTool,
+      instructions: mcpInstructions(),
+      baseLabel: loopbackBase,
+    });
+    if (out.kind === 'response') responses.push(out.message);
+  }
+
+  if (responses.length === 0) {
+    res.writeHead(202, mcpJsonHeaders(sessionId, { 'Access-Control-Allow-Origin': '*' }));
+    res.end();
+    return;
+  }
+
+  if (wantsSse) {
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream; charset=utf-8',
+      'Cache-Control': 'no-cache, no-transform',
+      Connection: 'keep-alive',
+      'Mcp-Session-Id': sessionId,
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Expose-Headers': 'Mcp-Session-Id',
+    });
+    for (const message of responses) writeSseMessage(res, message);
+    res.end();
+    return;
+  }
+
+  const payload = responses.length === 1 ? responses[0] : responses;
+  res.writeHead(200, mcpJsonHeaders(sessionId, { 'Access-Control-Allow-Origin': '*' }));
+  res.end(JSON.stringify(payload));
 }
 
 async function handleApi(req, res, url) {
@@ -438,6 +586,10 @@ await seedLibraryIfEmpty();
 const server = http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
+    if (url.pathname === '/mcp' || url.pathname === '/mcp/') {
+      await handleMcpHttp(req, res, url);
+      return;
+    }
     if (url.pathname === '/api' || url.pathname.startsWith('/api/')) {
       await handleApi(req, res, url);
       return;
@@ -451,4 +603,5 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, HOST, () => {
   console.log(`Archify library app on http://${HOST}:${PORT}/`);
+  console.log(`MCP Streamable HTTP on http://${HOST === '0.0.0.0' ? '127.0.0.1' : HOST}:${PORT}/mcp`);
 });
