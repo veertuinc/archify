@@ -1,0 +1,93 @@
+{
+  "schemaVersion": 1,
+  "entries": [
+    {
+      "id": "agent-tool-call",
+      "type": "workflow",
+      "title": "Agent Tool Call Workflow",
+      "source": "sources/agent-tool-call.workflow.json",
+      "artifact": "artifacts/agent-tool-call.workflow.html",
+      "updatedAt": "2026-08-31T15:53:49.055Z"
+    },
+    {
+      "id": "deployment-ownership",
+      "type": "architecture",
+      "title": "Production Deployment Ownership",
+      "source": "sources/deployment-ownership.architecture.json",
+      "artifact": "artifacts/deployment-ownership.architecture.html",
+      "updatedAt": "2026-08-31T15:53:49.056Z"
+    },
+    {
+      "id": "cache-miss",
+      "type": "sequence",
+      "title": "Cache Miss Request Sequence",
+      "source": "sources/cache-miss.sequence.json",
+      "artifact": "artifacts/cache-miss.sequence.html",
+      "updatedAt": "2026-08-31T15:53:49.059Z"
+    },
+    {
+      "id": "delivery-workflow",
+      "type": "workflow",
+      "title": "Release Delivery Workflow",
+      "source": "sources/delivery-workflow.workflow.json",
+      "artifact": "artifacts/delivery-workflow.workflow.html",
+      "updatedAt": "2026-08-31T15:53:49.060Z"
+    },
+    {
+      "id": "incident-runbook",
+      "type": "workflow",
+      "title": "Incident Response Runbook",
+      "source": "sources/incident-runbook.workflow.json",
+      "artifact": "artifacts/incident-runbook.workflow.html",
+      "updatedAt": "2026-08-31T15:53:49.062Z"
+    },
+    {
+      "id": "product-analytics",
+      "type": "dataflow",
+      "title": "Product Analytics Data Flow",
+      "source": "sources/product-analytics.dataflow.json",
+      "artifact": "artifacts/product-analytics.dataflow.html",
+      "updatedAt": "2026-08-31T15:53:49.064Z"
+    },
+    {
+      "id": "async-roundtrip",
+      "type": "sequence",
+      "title": "Async Job Roundtrip",
+      "source": "sources/async-roundtrip.sequence.json",
+      "artifact": "artifacts/async-roundtrip.sequence.html",
+      "updatedAt": "2026-08-31T15:53:49.067Z"
+    },
+    {
+      "id": "event-stream",
+      "type": "dataflow",
+      "title": "Order Event-stream Topology",
+      "source": "sources/event-stream.dataflow.json",
+      "artifact": "artifacts/event-stream.dataflow.html",
+      "updatedAt": "2026-08-31T15:53:49.069Z"
+    },
+    {
+      "id": "agent-run",
+      "type": "lifecycle",
+      "title": "Agent Run Lifecycle",
+      "source": "sources/agent-run.lifecycle.json",
+      "artifact": "artifacts/agent-run.lifecycle.html",
+      "updatedAt": "2026-08-31T15:53:49.071Z"
+    },
+    {
+      "id": "deployment-lifecycle",
+      "type": "lifecycle",
+      "title": "Deployment Release Lifecycle",
+      "source": "sources/deployment-lifecycle.lifecycle.json",
+      "artifact": "artifacts/deployment-lifecycle.lifecycle.html",
+      "updatedAt": "2026-08-31T15:53:49.073Z"
+    },
+    {
+      "id": "web-app",
+      "type": "architecture",
+      "title": "Sample Web App",
+      "source": "sources/web-app.architecture.json",
+      "artifact": "artifacts/web-app.architecture.html",
+      "updatedAt": "2026-08-31T15:53:49.075Z"
+    }
+  ]
+}
