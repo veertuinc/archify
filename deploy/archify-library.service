@@ -1,0 +1,21 @@
+[Unit]
+Description=Archify library web UI (diagram view and edit)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=veertu
+Group=veertu
+WorkingDirectory=/home/veertu/archify
+Environment=HOME=/home/veertu
+Environment=ARCHIFY_GALLERY_HOST=0.0.0.0
+Environment=ARCHIFY_GALLERY_PORT=8787
+Environment=ARCHIFY_UPDATE_CHECK_DISABLED=1
+ExecStart=/home/veertu/archify/scripts/serve-gallery.sh
+Restart=on-failure
+RestartSec=3
+KillMode=process
+
+[Install]
+WantedBy=multi-user.target
