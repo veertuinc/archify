@@ -204,7 +204,14 @@
     </form>
   </dialog>
 
-  <script>
+  <script type="module">
+    import {
+      getDiagramIdFromSearch,
+      setDiagramIdInUrl,
+      clearDiagramIdInUrl,
+      resolveSelectionId,
+    } from './library-selection-url.js';
+
     const state = {
       entries: [],
       currentId: null,
@@ -287,17 +294,32 @@
       return data;
     }
 
+    function syncSelectionUrl(id) {
+      const next = id
+        ? setDiagramIdInUrl(location.href, id)
+        : clearDiagramIdInUrl(location.href);
+      history.replaceState(null, '', next);
+    }
+
     async function refreshList(selectId) {
       const data = await api('/api/diagrams');
       state.entries = data.entries || [];
       renderList();
-      if (selectId) await selectDiagram(selectId);
-      else if (state.currentId && state.entries.some((e) => e.id === state.currentId)) {
-        /* keep */
-      } else if (state.entries[0]) {
-        await selectDiagram(state.entries[0].id);
+      const nextId = resolveSelectionId({
+        selectId: selectId || null,
+        currentId: state.currentId,
+        urlId: getDiagramIdFromSearch(location.search),
+        entryIds: state.entries.map((e) => e.id),
+      });
+      if (nextId) {
+        if (nextId === state.currentId) {
+          syncSelectionUrl(nextId);
+        } else {
+          await selectDiagram(nextId);
+        }
       } else {
         state.currentId = null;
+        syncSelectionUrl(null);
         el.editor.value = '';
         el.editor.disabled = true;
         el.meta.textContent = 'Select or create a diagram.';
@@ -313,6 +335,7 @@
       const data = await api('/api/diagrams/' + encodeURIComponent(id));
       state.currentId = id;
       state.dirty = false;
+      syncSelectionUrl(id);
       el.editor.value = JSON.stringify(data.document, null, 2);
       el.editor.disabled = false;
       el.meta.textContent = data.entry.title + ' · ' + data.entry.type + ' · ' + data.entry.id;
@@ -377,6 +400,7 @@
         await api('/api/diagrams/' + encodeURIComponent(entry.id), { method: 'DELETE' });
         state.currentId = null;
         state.dirty = false;
+        syncSelectionUrl(null);
         setStatus('Deleted ' + entry.id + '.', 'ok');
         await refreshList();
       } catch (err) {
