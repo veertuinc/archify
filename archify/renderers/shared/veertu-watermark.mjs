@@ -1,9 +1,36 @@
-// Veertu corner watermark for delivered diagram SVGs.
-// Atom mark is intentionally simplified so it stays legible at small size.
+// Veertu corner watermark: official wordmark from veertu.com.
+// Source: https://veertu.com/wp-content/uploads/2020/07/veertu-logo.svg
+// Local copy: archify/assets/brand/veertu-logo.svg
+
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const WATERMARK_CLASS = 'veertu-watermark';
+const LOGO_VIEW_W = 783.009;
+const LOGO_VIEW_H = 188.156;
 const VIEWBOX_RE = /\bviewBox\s*=\s*["']([^"']+)["']/i;
 const SVG_OPEN_RE = /<svg\b[^>]*>/i;
+const WATERMARK_GROUP_RE = /<g\b[^>]*class=["']veertu-watermark["'][\s\S]*?<\/g>\s*/gi;
+
+const here = path.dirname(fileURLToPath(import.meta.url));
+const logoPath = path.resolve(here, '../../assets/brand/veertu-logo.svg');
+
+let cachedLogoPaths = null;
+
+function loadLogoPaths() {
+  if (cachedLogoPaths) return cachedLogoPaths;
+  const raw = fs.readFileSync(logoPath, 'utf8');
+  const paths = [...raw.matchAll(/<path\b[^>]*\/?>/gi)].map((m) => m[0]
+    .replace(/\s+/g, ' ')
+    .replace(/\sid="[^"]*"/gi, '')
+    .trim());
+  if (paths.length < 6) {
+    throw new Error(`veertu-watermark: expected 6 paths in ${logoPath}, found ${paths.length}`);
+  }
+  cachedLogoPaths = paths.join('');
+  return cachedLogoPaths;
+}
 
 function parseViewBox(svg) {
   const match = svg.match(VIEWBOX_RE);
@@ -14,37 +41,36 @@ function parseViewBox(svg) {
 }
 
 function watermarkMarkup(viewBox) {
-  const size = Math.max(28, Math.min(48, Math.round(Math.min(viewBox.width, viewBox.height) * 0.07)));
-  const pad = Math.max(12, Math.round(size * 0.35));
-  const x = viewBox.minX + viewBox.width - size - pad;
-  const y = viewBox.minY + viewBox.height - size - pad;
-  const scale = size / 64;
-  return `<g class="${WATERMARK_CLASS}" aria-hidden="true" pointer-events="none" opacity="0.55" transform="translate(${x} ${y}) scale(${scale})">
-  <ellipse cx="32" cy="32" rx="26" ry="10" fill="none" stroke="#60259F" stroke-width="3" transform="rotate(60 32 32)"/>
-  <ellipse cx="32" cy="32" rx="26" ry="10" fill="none" stroke="#60259F" stroke-width="3" transform="rotate(-60 32 32)"/>
-  <ellipse cx="32" cy="32" rx="26" ry="10" fill="none" stroke="#60259F" stroke-width="3"/>
-  <circle cx="32" cy="32" r="8" fill="#EA1D76"/>
-</g>`;
+  // Wide wordmark: size by width (~14% of canvas), clamp for small diagrams.
+  const targetW = Math.max(96, Math.min(180, Math.round(viewBox.width * 0.14)));
+  const scale = targetW / LOGO_VIEW_W;
+  const targetH = LOGO_VIEW_H * scale;
+  const pad = Math.max(10, Math.round(Math.min(viewBox.width, viewBox.height) * 0.02));
+  const x = viewBox.minX + viewBox.width - targetW - pad;
+  const y = viewBox.minY + viewBox.height - targetH - pad;
+  const paths = loadLogoPaths();
+  return `<g class="${WATERMARK_CLASS}" data-veertu-logo="wordmark" aria-hidden="true" pointer-events="none" opacity="0.7" transform="translate(${x} ${y}) scale(${scale})">${paths}</g>`;
+}
+
+function stripWatermark(svg) {
+  return svg.replace(WATERMARK_GROUP_RE, '');
 }
 
 /**
- * Append a bottom-right Veertu atom watermark before </svg>.
- * Idempotent: skips if a watermark group is already present.
+ * Append (or replace) a bottom-right Veertu wordmark before </svg>.
  */
 export function injectVeertuWatermark(svg) {
   if (typeof svg !== 'string' || !svg.includes('<svg')) return svg;
-  if (svg.includes(`class="${WATERMARK_CLASS}"`) || svg.includes(`class='${WATERMARK_CLASS}'`)) {
-    return svg;
-  }
-  const viewBox = parseViewBox(svg) || { minX: 0, minY: 0, width: 960, height: 540 };
-  if (!SVG_OPEN_RE.test(svg)) return svg;
+  let next = stripWatermark(svg);
+  const viewBox = parseViewBox(next) || { minX: 0, minY: 0, width: 960, height: 540 };
+  if (!SVG_OPEN_RE.test(next)) return svg;
   const mark = watermarkMarkup(viewBox);
-  if (/<\/svg>\s*$/i.test(svg)) {
-    return svg.replace(/<\/svg>\s*$/i, `${mark}\n</svg>`);
+  if (/<\/svg>\s*$/i.test(next)) {
+    return next.replace(/<\/svg>\s*$/i, `${mark}\n</svg>`);
   }
-  const idx = svg.lastIndexOf('</svg>');
+  const idx = next.lastIndexOf('</svg>');
   if (idx === -1) return svg;
-  return `${svg.slice(0, idx)}${mark}\n${svg.slice(idx)}`;
+  return `${next.slice(0, idx)}${mark}\n${next.slice(idx)}`;
 }
 
 export const VEERTU_DEFAULT_PRESET = 'veertu';
