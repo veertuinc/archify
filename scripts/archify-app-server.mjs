@@ -194,8 +194,86 @@ async function listTemplates() {
     .filter(Boolean);
 }
 
+function apiCatalog() {
+  return {
+    name: 'archify-library-api',
+    version: 1,
+    security: {
+      auth: 'none',
+      warning: 'No authentication in v1. Expose only on localhost or a private/VPN network.',
+    },
+    baseUrlHint: `http://${HOST === '0.0.0.0' ? '127.0.0.1' : HOST}:${PORT}`,
+    idRules: 'lowercase letters, numbers, hyphens; /^[a-z0-9][a-z0-9-]{0,62}$/',
+    types: [...TYPES],
+    artifactUrl: '/library/artifacts/{id}.{type}.html',
+    sourceUrl: '/library/sources/{id}.{type}.json',
+    endpoints: [
+      {
+        method: 'GET',
+        path: '/api',
+        description: 'This catalog.',
+      },
+      {
+        method: 'GET',
+        path: '/api/health',
+        description: 'Liveness check.',
+        response: { ok: true },
+      },
+      {
+        method: 'GET',
+        path: '/api/diagrams',
+        description: 'List library entries (manifest).',
+      },
+      {
+        method: 'GET',
+        path: '/api/templates',
+        description: 'List example templates usable for create.',
+      },
+      {
+        method: 'GET',
+        path: '/api/diagrams/{id}',
+        description: 'Get one entry plus its JSON IR document.',
+      },
+      {
+        method: 'POST',
+        path: '/api/diagrams',
+        description: 'Create a diagram from document or template, then deliver HTML.',
+        body: {
+          id: 'string (required)',
+          type: 'architecture|workflow|sequence|dataflow|lifecycle (required)',
+          document: 'object (optional JSON IR)',
+          template: 'string (optional template id/file when document omitted)',
+          title: 'string (optional when seeding from template)',
+        },
+      },
+      {
+        method: 'PUT',
+        path: '/api/diagrams/{id}',
+        description: 'Replace document and re-deliver, or validateOnly.',
+        body: {
+          document: 'object (required JSON IR)',
+          validateOnly: 'boolean (optional)',
+        },
+      },
+      {
+        method: 'DELETE',
+        path: '/api/diagrams/{id}',
+        description: 'Delete source, artifact, and manifest entry.',
+      },
+    ],
+    mcp: {
+      script: 'scripts/archify-mcp.mjs',
+      env: { ARCHIFY_API_BASE: 'http://127.0.0.1:8787' },
+    },
+  };
+}
+
 async function handleApi(req, res, url) {
   const method = req.method || 'GET';
+
+  if (method === 'GET' && (url.pathname === '/api' || url.pathname === '/api/')) {
+    return send(res, 200, apiCatalog());
+  }
 
   if (method === 'GET' && url.pathname === '/api/health') {
     return send(res, 200, { ok: true });
@@ -360,7 +438,7 @@ await seedLibraryIfEmpty();
 const server = http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
-    if (url.pathname.startsWith('/api/')) {
+    if (url.pathname === '/api' || url.pathname.startsWith('/api/')) {
       await handleApi(req, res, url);
       return;
     }
