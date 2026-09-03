@@ -24,6 +24,7 @@ import {
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
 const WWW = path.join(ROOT, 'var', 'www');
+const ARCHIFY_ASSETS = path.join(ROOT, 'archify', 'assets');
 const LIBRARY = path.join(ROOT, 'var', 'library');
 const SOURCES = path.join(LIBRARY, 'sources');
 const ARTIFACTS = path.join(LIBRARY, 'artifacts');
@@ -654,6 +655,17 @@ async function handleApi(req, res, url) {
   return send(res, 404, { error: 'not_found' });
 }
 
+function serveFile(res, file) {
+  const ext = path.extname(file).toLowerCase();
+  const headers = { 'Content-Type': MIME[ext] || 'application/octet-stream' };
+  if (ext === '.woff2') {
+    headers['Access-Control-Allow-Origin'] = '*';
+    headers['Cache-Control'] = 'public, max-age=31536000, immutable';
+  }
+  res.writeHead(200, headers);
+  fs.createReadStream(file).pipe(res);
+}
+
 async function serveStatic(req, res, url) {
   let rel = decodeURIComponent(url.pathname);
   if (rel === '/') rel = '/index.html';
@@ -664,19 +676,26 @@ async function serveStatic(req, res, url) {
     if (!file.startsWith(LIBRARY) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) {
       return send(res, 404, 'Not found');
     }
-    const ext = path.extname(file).toLowerCase();
-    res.writeHead(200, { 'Content-Type': MIME[ext] || 'application/octet-stream' });
-    fs.createReadStream(file).pipe(res);
+    serveFile(res, file);
     return;
   }
 
-  const file = path.normalize(path.join(WWW, rel));
-  if (!file.startsWith(WWW) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) {
-    return send(res, 404, 'Not found');
+  const wwwFile = path.normalize(path.join(WWW, rel));
+  if (wwwFile.startsWith(WWW) && fs.existsSync(wwwFile) && !fs.statSync(wwwFile).isDirectory()) {
+    serveFile(res, wwwFile);
+    return;
   }
-  const ext = path.extname(file).toLowerCase();
-  res.writeHead(200, { 'Content-Type': MIME[ext] || 'application/octet-stream' });
-  fs.createReadStream(file).pipe(res);
+
+  // Bundled Archify assets (fonts, etc.) when not copied into var/www.
+  if (rel.startsWith('/assets/')) {
+    const assetFile = path.normalize(path.join(ARCHIFY_ASSETS, rel.slice('/assets/'.length)));
+    if (assetFile.startsWith(ARCHIFY_ASSETS) && fs.existsSync(assetFile) && !fs.statSync(assetFile).isDirectory()) {
+      serveFile(res, assetFile);
+      return;
+    }
+  }
+
+  return send(res, 404, 'Not found');
 }
 
 await seedLibraryIfEmpty();
