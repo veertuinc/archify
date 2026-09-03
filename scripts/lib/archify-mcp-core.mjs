@@ -134,6 +134,10 @@ export const TOOLS = [
           additionalProperties: false,
         },
         theme: { type: 'string', description: 'Optional viewer theme.' },
+        omitText: {
+          type: 'boolean',
+          description: 'Strip diagram labels and Share Card branding from the export.',
+        },
       },
       required: ['id', 'format'],
       additionalProperties: false,
@@ -205,6 +209,7 @@ export function createToolCaller(api, baseLabel = '') {
         if (args.route) body.route = args.route;
         if (args.reach) body.reach = args.reach;
         if (args.theme) body.theme = args.theme;
+        if (args.omitText === true) body.omitText = true;
         return textResult(await api('POST', `/api/diagrams/${encodeURIComponent(args.id)}/export`, body));
       }
       default:

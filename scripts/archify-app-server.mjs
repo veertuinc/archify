@@ -501,6 +501,7 @@ async function handleApi(req, res, url) {
         route: body.route,
         reach: body.reach,
         theme: body.theme,
+        omitText: body.omitText === true,
       });
     } catch (err) {
       if (err instanceof HeadlessExportError) {

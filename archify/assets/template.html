@@ -3585,6 +3585,33 @@
       letter-spacing: 0.12em;
       text-transform: uppercase;
     }
+    .export-menu-option {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      align-items: start;
+      gap: 0.45rem;
+      padding: 0.2rem 0.55rem 0.55rem;
+      color: var(--toolbar-text);
+      font-size: 0.62rem;
+      line-height: 1.35;
+      cursor: pointer;
+      border-bottom: 1px solid color-mix(in srgb, var(--toolbar-border) 68%, transparent);
+      margin-bottom: 0.42rem;
+    }
+    .export-menu-option input {
+      margin: 0.12rem 0 0;
+      accent-color: var(--frontend-stroke, #22d3ee);
+    }
+    .export-menu-option span {
+      display: block;
+    }
+    .export-menu-option small {
+      display: block;
+      margin-top: 0.12rem;
+      color: var(--text-faint);
+      font-size: 0.54rem;
+      line-height: 1.3;
+    }
     .toolbar .export-menu button {
       display: grid;
       grid-template-columns: 1.15rem minmax(0, 1fr);
@@ -5070,6 +5097,10 @@
           <div><strong>{{i18n:viewer.export.diagram}}</strong><span>{{i18n:viewer.export.subtitle}}</span></div>
           <kbd>E</kbd>
         </div>
+        <label class="export-menu-option" for="export-omit-text">
+          <input id="export-omit-text" type="checkbox" />
+          <span>{{i18n:viewer.export.omitText}}<small>{{i18n:viewer.export.omitText.hint}}</small></span>
+        </label>
         <div class="export-menu-section" role="group" aria-label="{{i18n:viewer.export.share}}">
           <span class="export-menu-heading" aria-hidden="true">{{i18n:viewer.export.share}}</span>
           <button data-format="share-card" type="button" role="menuitem" tabindex="-1"><span class="export-item-copy"><strong>{{i18n:viewer.export.shareCard}}</strong><small class="hint">1200&times;630 PNG</small></span></button>
@@ -5798,6 +5829,55 @@
           : viewerText('viewer.export.unknown');
       }
 
+      var omitTextInput = document.getElementById('export-omit-text');
+      var EXPORT_OMIT_TEXT_KEY = 'archify-export-omit-text';
+
+      function exportOmitTextEnabled() {
+        if (omitTextInput) return omitTextInput.checked;
+        try {
+          return new URLSearchParams(window.location.search).get('exportOmitText') === '1';
+        } catch (_) { return false; }
+      }
+
+      function syncExportOmitTextAttribute() {
+        if (exportOmitTextEnabled()) {
+          document.documentElement.setAttribute('data-export-omit-text', 'true');
+        } else {
+          document.documentElement.removeAttribute('data-export-omit-text');
+        }
+      }
+
+      function withExportOmitText(opts) {
+        opts = opts || {};
+        if (exportOmitTextEnabled()) opts.omitText = true;
+        return opts;
+      }
+
+      function stripDiagramText(root) {
+        Array.prototype.forEach.call(root.querySelectorAll('text'), function (el) {
+          el.remove();
+        });
+      }
+
+      if (omitTextInput) {
+        try {
+          var omitTextParam = new URLSearchParams(window.location.search).get('exportOmitText');
+          if (omitTextParam === '1') omitTextInput.checked = true;
+          else if (omitTextParam === '0') omitTextInput.checked = false;
+          else {
+            var storedOmitText = sessionStorage.getItem(EXPORT_OMIT_TEXT_KEY);
+            if (storedOmitText === '1') omitTextInput.checked = true;
+          }
+        } catch (_) {}
+        syncExportOmitTextAttribute();
+        omitTextInput.addEventListener('change', function () {
+          try {
+            sessionStorage.setItem(EXPORT_OMIT_TEXT_KEY, omitTextInput.checked ? '1' : '0');
+          } catch (_) {}
+          syncExportOmitTextAttribute();
+        });
+      }
+
       function diagramFilename() {
         var title = (document.title || 'diagram')
           .replace(/\s+Architecture(\s+Diagram)?$/i, '')
@@ -6329,6 +6409,8 @@
         clone.insertBefore(style, clone.firstChild);
         clone.insertBefore(bgRect, style.nextSibling);
 
+        if (opts.omitText) stripDiagramText(clone);
+
         return {
           svgString: new XMLSerializer().serializeToString(clone),
           width: vb.width * scale,
@@ -6372,7 +6454,7 @@
         var svg = document.querySelector('.diagram-container svg');
         var vb = svg.viewBox.baseVal;
         var scale = pickSafeScale(vb.width, vb.height);
-        var data = serializeSvg(scale);
+        var data = serializeSvg(scale, withExportOmitText());
         var svgBlob = new Blob([data.svgString], { type: 'image/svg+xml;charset=utf-8' });
         var svgUrl = URL.createObjectURL(svgBlob);
 
@@ -6443,11 +6525,16 @@
         options = options || {};
         var routeSnapshot = options.routeSnapshot || null;
         var reachSnapshot = options.reachSnapshot || null;
+        var omitText = options.omitText === true || exportOmitTextEnabled();
         if (routeSnapshot && reachSnapshot) return Promise.reject(exportError('viewer.export.error.variantsCombined'));
         var svg = document.querySelector('.diagram-container svg');
         var vb = svg.viewBox.baseVal;
         var sourceScale = Math.min(2, pickSafeScale(vb.width, vb.height));
-        var data = serializeSvg(sourceScale, { routeSnapshot: routeSnapshot, reachSnapshot: reachSnapshot });
+        var data = serializeSvg(sourceScale, withExportOmitText({
+          routeSnapshot: routeSnapshot,
+          reachSnapshot: reachSnapshot,
+          omitText: omitText
+        }));
         if (!data.canonicalStateClean) return Promise.reject(exportError('viewer.export.error.viewerState'));
         if (routeSnapshot && !data.routeStateClean) return Promise.reject(exportError('viewer.export.error.routeState'));
         if (reachSnapshot && !data.reachStateClean) return Promise.reject(exportError('viewer.export.error.reachState'));
@@ -6509,31 +6596,34 @@
               ctx.fillStyle = bg;
               ctx.fillRect(0, 0, SHARE_CARD_WIDTH, SHARE_CARD_HEIGHT);
 
-              ctx.fillStyle = accent;
-              ctx.fillRect(SHARE_CARD_PADDING, 27, 42, 3);
+              if (!omitText) {
+                ctx.fillStyle = accent;
+                ctx.fillRect(SHARE_CARD_PADDING, 27, 42, 3);
 
-              ctx.textBaseline = 'alphabetic';
-              ctx.fillStyle = text;
-              var fittedTitle = fitCanvasText(ctx, title, SHARE_CARD_WIDTH - SHARE_CARD_PADDING * 2 - 330, 29, 18, '700');
-              ctx.fillText(fittedTitle, SHARE_CARD_PADDING, 62);
+                ctx.textBaseline = 'alphabetic';
+                ctx.fillStyle = text;
+                var fittedTitle = fitCanvasText(ctx, title, SHARE_CARD_WIDTH - SHARE_CARD_PADDING * 2 - 330, 29, 18, '700');
+                ctx.fillText(fittedTitle, SHARE_CARD_PADDING, 62);
 
-              ctx.fillStyle = muted;
-              var fittedSubtitle = fitCanvasText(ctx, subtitle, SHARE_CARD_WIDTH - SHARE_CARD_PADDING * 2 - 280, 13, 11, '500');
-              ctx.fillText(fittedSubtitle, SHARE_CARD_PADDING, 87);
+                ctx.fillStyle = muted;
+                var fittedSubtitle = fitCanvasText(ctx, subtitle, SHARE_CARD_WIDTH - SHARE_CARD_PADDING * 2 - 280, 13, 11, '500');
+                ctx.fillText(fittedSubtitle, SHARE_CARD_PADDING, 87);
 
-              ctx.font = "600 12px 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
-              ctx.textAlign = 'right';
-              ctx.fillStyle = accent;
-              ctx.fillText(cardLabel, SHARE_CARD_WIDTH - SHARE_CARD_PADDING, 50);
-              ctx.textAlign = 'left';
+                ctx.font = "600 12px 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
+                ctx.textAlign = 'right';
+                ctx.fillStyle = accent;
+                ctx.fillText(cardLabel, SHARE_CARD_WIDTH - SHARE_CARD_PADDING, 50);
+                ctx.textAlign = 'left';
+              }
 
               var availableWidth = SHARE_CARD_WIDTH - SHARE_CARD_PADDING * 2;
-              var availableHeight = SHARE_CARD_HEIGHT - SHARE_CARD_HEADER - SHARE_CARD_PADDING;
+              var headerOffset = omitText ? SHARE_CARD_PADDING : SHARE_CARD_HEADER;
+              var availableHeight = SHARE_CARD_HEIGHT - headerOffset - SHARE_CARD_PADDING;
               var fit = Math.min(availableWidth / data.width, availableHeight / data.height);
               var drawWidth = data.width * fit;
               var drawHeight = data.height * fit;
               var drawX = SHARE_CARD_PADDING + (availableWidth - drawWidth) / 2;
-              var drawY = SHARE_CARD_HEADER + (availableHeight - drawHeight) / 2;
+              var drawY = headerOffset + (availableHeight - drawHeight) / 2;
 
               ctx.strokeStyle = border;
               ctx.lineWidth = 1;
@@ -6613,7 +6703,7 @@
         var svg = document.querySelector('.diagram-container svg');
         var vb = svg.viewBox.baseVal;
         var scale = Math.min(1, 1280 / vb.width);
-        var data = serializeSvg(scale);
+        var data = serializeSvg(scale, withExportOmitText());
         var sourceUrl = URL.createObjectURL(new Blob([data.svgString], { type: 'image/svg+xml;charset=utf-8' }));
 
         function createMotionScene(root) {
@@ -6991,7 +7081,7 @@
               toast(viewerText('viewer.export.downloadedShare'));
             })
           : format === 'svg'
-          ? Promise.resolve(serializeSvg(1, { autoTheme: true })).then(function (d) {
+          ? Promise.resolve(serializeSvg(1, withExportOmitText({ autoTheme: true }))).then(function (d) {
               var blob = new Blob([d.svgString], { type: 'image/svg+xml;charset=utf-8' });
               recordExportReceipt('svg', blob, d.canonicalStateClean);
               download(blob, base + '.svg');
@@ -7095,6 +7185,11 @@
         } else {
           document.documentElement.removeAttribute('data-last-export-reach-state-clean');
         }
+        if (exportOmitTextEnabled()) {
+          document.documentElement.setAttribute('data-last-export-omit-text', 'true');
+        } else {
+          document.documentElement.removeAttribute('data-last-export-omit-text');
+        }
         if (dimensions) {
           document.documentElement.setAttribute('data-last-export-width', String(dimensions.width));
           document.documentElement.setAttribute('data-last-export-height', String(dimensions.height));
@@ -7113,6 +7208,7 @@
         document.documentElement.removeAttribute('data-last-export-variant');
         document.documentElement.removeAttribute('data-last-export-route-state-clean');
         document.documentElement.removeAttribute('data-last-export-reach-state-clean');
+        document.documentElement.removeAttribute('data-last-export-omit-text');
         document.documentElement.removeAttribute('data-last-export-error-format');
         document.documentElement.removeAttribute('data-last-export-error');
       }

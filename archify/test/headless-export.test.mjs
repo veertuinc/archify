@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
@@ -24,6 +25,15 @@ test('rejects route-share-card without route', async () => {
     () => exportDiagramArtifact({ artifactPath: fixture, format: 'route-share-card' }),
     (err) => err instanceof HeadlessExportError && err.code === 'route_required',
   );
+});
+
+test('headless export forwards omitText through exportOmitText URL param', async () => {
+  const source = fs.readFileSync(
+    path.resolve(__dirname, '../../scripts/lib/archify-headless-export.mjs'),
+    'utf8',
+  );
+  assert.match(source, /options\.omitText === true/);
+  assert.match(source, /u\.searchParams\.set\('exportOmitText', '1'\)/);
 });
 
 test(

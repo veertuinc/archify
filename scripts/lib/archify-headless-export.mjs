@@ -69,6 +69,7 @@ function defaultMime(format, reported) {
  * @param {{ source: string, target: string }} [options.route]
  * @param {{ nodeId: string, direction: string }} [options.reach]
  * @param {string} [options.theme]
+ * @param {boolean} [options.omitText]
  * @param {number} [options.timeoutMs]
  * @param {() => string|null} [options.resolveChrome]
  * @param {(chromePath: string) => Promise<ChromeVisualBrowser>|ChromeVisualBrowser} [options.browserFactory]
@@ -111,6 +112,12 @@ export async function exportDiagramArtifact(options = {}) {
   if (options.theme) {
     const u = new URL(url);
     u.searchParams.set('theme', options.theme);
+    url = u.href;
+  }
+
+  if (options.omitText === true) {
+    const u = new URL(url);
+    u.searchParams.set('exportOmitText', '1');
     url = u.href;
   }
 

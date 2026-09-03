@@ -137,6 +137,8 @@ const MESSAGE_PAIRS = {
   'viewer.export.diagram': ['Export diagram', '导出图表'],
   'viewer.export.menu': ['Export', '导出'],
   'viewer.export.subtitle': ['Portable, clean outputs', '便携、整洁的输出'],
+  'viewer.export.omitText': ['Hide labels and branding', '隐藏标签与品牌标识'],
+  'viewer.export.omitText.hint': ['Diagram shapes only; no node text or ARCHIFY badge', '仅保留图形；不含节点文字或 ARCHIFY 标识'],
   'viewer.export.share': ['Share', '分享'],
   'viewer.export.shareCard': ['Share Card', '分享卡片'],
   'viewer.export.routeShareCard': ['Route Share Card', '路径分享卡片'],
