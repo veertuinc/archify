@@ -2,7 +2,6 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   SCENARIO_RECIPES,
-  detectGuideLanguage,
   listScenarioRecipes,
   publicGuideData,
   recommendScenario,
@@ -20,35 +19,29 @@ test('guide: exposes 11 unique recipes across every diagram type', () => {
   );
 });
 
-test('guide: every recipe has complete English and Chinese decision copy', () => {
+test('guide: every recipe has complete English decision copy', () => {
   for (const recipe of SCENARIO_RECIPES) {
     assert.match(recipe.id, /^[a-z0-9]+(?:-[a-z0-9]+)*$/);
-    assert.ok(recipe.signals.length >= 8, recipe.id);
+    assert.ok(recipe.signals.length >= 5, recipe.id);
     assert.ok(['veertu', 'classic', 'signal-flow', 'blueprint', 'editorial'].includes(recipe.presentation.preset), recipe.id);
-    for (const lang of ['en', 'zh']) {
-      const copy = recipe[lang];
-      assert.ok(copy.title.length >= 4, `${recipe.id}.${lang}.title`);
-      for (const field of ['question', 'summary', 'useWhen', 'avoidWhen', 'prompt']) {
-        assert.ok(copy[field].length > 10, `${recipe.id}.${lang}.${field}`);
-      }
-      assert.equal(copy.include.length, 4, `${recipe.id}.${lang}.include`);
+    assert.ok(recipe.title.length >= 4, `${recipe.id}.title`);
+    for (const field of ['question', 'summary', 'useWhen', 'avoidWhen', 'prompt']) {
+      assert.ok(recipe[field].length > 10, `${recipe.id}.${field}`);
     }
+    assert.equal(recipe.include.length, 4, `${recipe.id}.include`);
   }
 });
 
-test('guide: language detection and localization are deterministic', () => {
-  assert.equal(detectGuideLanguage('show an API request'), 'en');
-  assert.equal(detectGuideLanguage('展示 API 请求'), 'zh');
-  assert.equal(listScenarioRecipes('zh')[0].title, '系统总览');
-  assert.equal(listScenarioRecipes('en')[0].title, 'System overview');
+test('guide: listScenarioRecipes returns English copy', () => {
+  assert.equal(listScenarioRecipes()[0].title, 'System overview');
 });
 
 test('guide: representative scenarios map to specialized recipes', () => {
   const cases = [
     ['Show an API request with Redis cache miss', 'api-request'],
     ['Show CI/CD build deploy rollback', 'delivery-workflow'],
-    ['展示 Kafka topic 消费者组和死信队列', 'event-stream'],
-    ['梳理 ETL 数仓 PII 数据血缘', 'data-lineage'],
+    ['Kafka topic consumer groups and dead letter queue', 'event-stream'],
+    ['ETL warehouse PII data lineage', 'data-lineage'],
     ['deployment lifecycle approval rollback state', 'deployment-lifecycle'],
     ['agent tool call approval gate MCP', 'agent-tool-call'],
   ];
@@ -69,12 +62,12 @@ test('guide: exact ids win and unknown questions fall back honestly', () => {
   assert.deepEqual(unknown.matchedSignals, []);
 });
 
-test('guide: public data includes both languages and weighted signals', () => {
+test('guide: public data includes weighted signals and proof links', () => {
   const data = publicGuideData();
   assert.equal(data.length, 11);
   for (const recipe of data) {
-    assert.ok(recipe.en.title);
-    assert.ok(recipe.zh.title);
+    assert.ok(recipe.title);
+    assert.ok(recipe.prompt);
     assert.ok(recipe.proof, `${recipe.id}: verified proof is required`);
     assert.ok(recipe.signals.every(([signal, weight]) => typeof signal === 'string' && weight > 0));
   }

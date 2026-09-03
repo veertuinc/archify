@@ -59,22 +59,14 @@ test('update awareness is notification-only and never replaces the requested wor
   assert.doesNotMatch(skill, /npx skills update|gh skill update/i);
 });
 
-test('language behavior stays within the bounded locale contract', () => {
-  assert.match(skill, /one primary authored language/);
-  assert.match(skill, /explicit user choice; otherwise follow the request or conversation's dominant language/);
-  assert.match(skill, /`meta\.locale` controls only renderer-owned Viewer UI/);
-  assert.match(skill, /use `"en"` or `"zh-CN"`/);
-  assert.match(skill, /For every other language, omit `meta\.locale`/);
-  assert.match(skill, /fixed Viewer UI and `<html lang>` fall back to English/);
+test('language behavior stays within the English-only locale contract', () => {
+  assert.match(skill, /`meta\.locale` controls renderer-owned Viewer UI and defaults to `"en"`/);
   assert.match(skill, /renderer never translates authored content/i);
   assert.match(skill, /product names.*code identifiers.*protocols.*API paths.*environment names/);
-  assert.match(authoringContract, /`meta\.locale` controls only renderer-owned reader surfaces/);
-  assert.match(authoringContract, /outside `en` and `zh-CN`/);
-  assert.match(authoringContract, /artifact is\s+not fully localized/);
-  assert.match(authoringContract, /Do not silently substitute\s+`zh-CN` for another language or Chinese locale/);
+  assert.match(authoringContract, /English-only/);
+  assert.match(authoringContract, /`meta\.locale` is optional and defaults to `"en"`/);
   assert.match(authoringContract, /It never translates authored content/);
   assert.match(authoringContract, /Renderer-owned default legend labels follow `meta\.locale`/);
-  assert.match(authoringContract, /The fallback\s+applies only to renderer-owned surfaces/);
 });
 
 test('skill keeps the title hierarchy compact by default', () => {

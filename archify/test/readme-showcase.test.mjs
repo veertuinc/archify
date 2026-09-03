@@ -217,7 +217,7 @@ test('README stays scannable without deleting the visual proof set', () => {
   for (const filename of ['README.md', 'README_EN.md']) {
     const readme = fs.readFileSync(path.join(repoRoot, filename), 'utf8');
     assert.ok(readme.split('\n').length <= 295, `${filename}: README grew beyond the scannable line budget`);
-    assert.match(readme, filename === 'README_ZH.md' ? /不需要绑定代码库/ : /No repository is required/);
+    assert.match(readme, /No repository is required/);
     for (const asset of commonAssets) {
       assert.ok(readme.includes(`docs/assets/${asset}`), `${filename}: visual proof ${asset} was removed`);
     }
@@ -230,8 +230,7 @@ test('README stays scannable without deleting the visual proof set', () => {
   assert.ok(wordCount <= 2085, `README.md is too verbose again (${wordCount} words)`);
   assert.ok(introBullets.length <= 8, `README.md has too many top-level capability bullets (${introBullets.length})`);
 
-  const chinese = fs.readFileSync(path.join(repoRoot), 'utf8');
-  assert.ok(chinese.includes('docs/assets/claude-skills-settings.png'), 'README_ZH.md lost the Claude Skills setup image');
+  assert.ok(english.includes('docs/assets/claude-skills-settings.png'), 'README.md lost the Claude Skills setup image');
 });
 
 test('all README languages end with the self-hosted star history chart', () => {
@@ -242,7 +241,7 @@ test('all README languages end with the self-hosted star history chart', () => {
   for (const filename of ['README.md', 'README_EN.md']) {
     const readme = fs.readFileSync(path.join(repoRoot, filename), 'utf8');
     const sectionIndex = readme.lastIndexOf('## Star History');
-    const contributingIndex = Math.max(readme.indexOf('## Contributing'), readme.indexOf('## 参与贡献'));
+    const contributingIndex = readme.indexOf('## Contributing');
     assert.ok(sectionIndex > contributingIndex, `${filename}: Star History must follow Contributing`);
     assert.ok(readme.includes(lightChart), `${filename}: missing light star history chart`);
     assert.ok(readme.includes(darkChart), `${filename}: missing dark star history chart`);

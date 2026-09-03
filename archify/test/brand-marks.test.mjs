@@ -140,12 +140,11 @@ test('generated catalog exposes a substantial, unique, provenance-backed preset 
   }
 });
 
-test('brand discovery resolves model names, aliases, domains, and Chinese channel aliases', () => {
+test('brand discovery resolves model names, aliases, and domains', () => {
   for (const [query, expected] of [
     ['GPT', 'openai'],
     ['Gemini', 'google-gemini'],
     ['github.com', 'github'],
-    ['微信', 'wechat'],
   ]) {
     const result = spawnSync(process.execPath, [cli, 'brands', query, '--json'], {
       cwd: skillRoot,

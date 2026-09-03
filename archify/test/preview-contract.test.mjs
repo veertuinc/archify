@@ -11,7 +11,6 @@ const skill = fs.readFileSync(path.join(skillRoot, 'SKILL.md'), 'utf8');
 const delivery = fs.readFileSync(path.join(skillRoot, 'references', 'delivery-contract.md'), 'utf8');
 const readme = fs.readFileSync(path.join(repoRoot, 'README.md'), 'utf8');
 const english = fs.readFileSync(path.join(repoRoot, 'README_EN.md'), 'utf8');
-const chinese = fs.readFileSync(path.join(repoRoot), 'utf8');
 
 test('preview contract: the skill keeps live preview explicit, desktop-only, and last-good', () => {
   assert.match(delivery, /archify\.mjs preview <type> <input>\.json <output>\.html/);
@@ -22,9 +21,9 @@ test('preview contract: the skill keeps live preview explicit, desktop-only, and
   assert.match(delivery, /must never enter the generated artifact or any export/i);
 });
 
-test('preview contract: all README languages document the same optional command without changing the hero', () => {
+test('preview contract: README mirrors document the same optional command without changing the hero', () => {
   assert.equal(readme, english);
-  for (const text of [readme, chinese]) {
+  for (const text of [readme, english]) {
     assert.match(text, /bin\/archify\.mjs preview workflow/);
     assert.match(text, /--no-open/);
     assert.match(text, /127\.0\.0\.1/);
