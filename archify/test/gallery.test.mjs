@@ -114,7 +114,7 @@ test('generated proof gallery matches its sources, receipts, and checked-in arti
 
   for (const relative of [
     'gallery.html',
-    'assets/site-language.js',
+    ,
     'assets/site-navigation.css',
     'gallery/manifest.json',
     ...manifest.entries.flatMap((entry) => [entry.artifact, entry.input]),

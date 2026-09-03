@@ -117,7 +117,7 @@ test('README motion proof is compact, looping, and backed by current gallery art
 });
 
 test('all README languages keep the product hero and retain the verified animated proof', () => {
-  for (const filename of ['README.md', 'README_EN.md', 'README_ZH.md']) {
+  for (const filename of ['README.md', 'README_EN.md']) {
     const readme = fs.readFileSync(path.join(repoRoot, filename), 'utf8');
     const heroIndex = readme.indexOf('docs/assets/archify-readme-hero.png');
     const titleIndex = readme.indexOf('# Archify');
@@ -136,7 +136,7 @@ test('all README languages keep the product hero and retain the verified animate
 });
 
 test('README installation tables contain a complete DeepSeek Harness row', () => {
-  for (const filename of ['README.md', 'README_EN.md', 'README_ZH.md']) {
+  for (const filename of ['README.md', 'README_EN.md']) {
     const readme = fs.readFileSync(path.join(repoRoot, filename), 'utf8');
     const row = readme.split('\n').find((line) => line.startsWith('| **DeepSeek Harness** |'));
     assert.ok(row, `${filename}: DeepSeek Harness must be an installation table row`);
@@ -180,7 +180,7 @@ test('README demos use checked-in captures and live deep links below the existin
     assert.ok(buffer.byteLength < 400 * 1024, `${demo.asset}: capture is too large`);
   }
 
-  for (const filename of ['README.md', 'README_EN.md', 'README_ZH.md']) {
+  for (const filename of ['README.md', 'README_EN.md']) {
     const readme = fs.readFileSync(path.join(repoRoot, filename), 'utf8');
     const heroIndex = readme.indexOf('docs/assets/archify-readme-hero.png');
     const proofIndex = readme.indexOf('docs/assets/archify-live-proof.gif');
@@ -214,7 +214,7 @@ test('README stays scannable without deleting the visual proof set', () => {
     'archify-lifecycle.png',
   ];
 
-  for (const filename of ['README.md', 'README_EN.md', 'README_ZH.md']) {
+  for (const filename of ['README.md', 'README_EN.md']) {
     const readme = fs.readFileSync(path.join(repoRoot, filename), 'utf8');
     assert.ok(readme.split('\n').length <= 295, `${filename}: README grew beyond the scannable line budget`);
     assert.match(readme, filename === 'README_ZH.md' ? /不需要绑定代码库/ : /No repository is required/);
@@ -230,7 +230,7 @@ test('README stays scannable without deleting the visual proof set', () => {
   assert.ok(wordCount <= 2085, `README.md is too verbose again (${wordCount} words)`);
   assert.ok(introBullets.length <= 8, `README.md has too many top-level capability bullets (${introBullets.length})`);
 
-  const chinese = fs.readFileSync(path.join(repoRoot, 'README_ZH.md'), 'utf8');
+  const chinese = fs.readFileSync(path.join(repoRoot), 'utf8');
   assert.ok(chinese.includes('docs/assets/claude-skills-settings.png'), 'README_ZH.md lost the Claude Skills setup image');
 });
 
@@ -239,7 +239,7 @@ test('all README languages end with the self-hosted star history chart', () => {
   const darkChart = 'https://raw.githubusercontent.com/tt-a1i/archify/star-history/assets/star-history-dark.svg';
   const workflow = fs.readFileSync(path.join(repoRoot, '.github', 'workflows', 'star-history.yml'), 'utf8');
 
-  for (const filename of ['README.md', 'README_EN.md', 'README_ZH.md']) {
+  for (const filename of ['README.md', 'README_EN.md']) {
     const readme = fs.readFileSync(path.join(repoRoot, filename), 'utf8');
     const sectionIndex = readme.lastIndexOf('## Star History');
     const contributingIndex = Math.max(readme.indexOf('## Contributing'), readme.indexOf('## 参与贡献'));

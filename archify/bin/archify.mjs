@@ -23,7 +23,7 @@ function usage() {
   archify inspect <type> <input.json>
   archify check <output.html>
   archify visual-check <output.html> [--json]
-  archify guide [scenario or question] [--json] [--lang en|zh]
+  archify guide [scenario or question] [--json]
   archify brands [name, alias, domain, or category] [--json]
   archify brands capture <url> [--json]
   archify examples
@@ -1349,7 +1349,6 @@ async function commandDoctor() {
 }
 
 async function commandGuide(args) {
-  let lang;
   let json = false;
   const queryParts = [];
 
@@ -1357,15 +1356,8 @@ async function commandGuide(args) {
     const arg = args[index];
     if (arg === '--json') {
       json = true;
-    } else if (arg === '--lang') {
-      const value = args[index + 1];
-      if (value !== 'en' && value !== 'zh') fail('--lang must be "en" or "zh".');
-      lang = value;
-      index += 1;
-    } else if (arg.startsWith('--lang=')) {
-      const value = arg.slice('--lang='.length);
-      if (value !== 'en' && value !== 'zh') fail('--lang must be "en" or "zh".');
-      lang = value;
+    } else if (arg === '--lang' || arg.startsWith('--lang=')) {
+      fail('The --lang option is no longer supported.');
     } else if (arg.startsWith('--')) {
       fail(`Unknown guide option "${arg}".`);
     } else {
@@ -1383,21 +1375,19 @@ async function commandGuide(args) {
 
   const query = queryParts.join(' ').trim();
   if (!query) {
-    const selectedLang = lang || 'en';
     if (json) {
       console.log(JSON.stringify({
         ok: true,
         mode: 'list',
-        lang: selectedLang,
-        recipes: guide.listScenarioRecipes(selectedLang),
+        recipes: guide.listScenarioRecipes(),
       }, null, 2));
     } else {
-      console.log(guide.formatScenarioList(selectedLang));
+      console.log(guide.formatScenarioList());
     }
     return;
   }
 
-  const result = guide.recommendScenario(query, lang ? { lang } : {});
+  const result = guide.recommendScenario(query);
   console.log(json ? JSON.stringify(result, null, 2) : guide.formatScenarioRecommendation(result));
 }
 

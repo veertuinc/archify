@@ -347,7 +347,7 @@ test('package, lockfile, Skill metadata, escaped Shields badge, and public docs 
     ].join('\n');
     writeFile(fixture, 'README.md', staleEnglish);
     writeFile(fixture, 'README_EN.md', staleEnglish);
-    writeFile(fixture, 'README_ZH.md', '![Version](https://img.shields.io/badge/version-2.13.0-blue)\n\nArchify 2.12 包含未发布能力。\n');
+    writeFile(fixture, '![Version](https://img.shields.io/badge/version-2.13.0-blue)\n\nArchify 2.12 包含未发布能力。\n');
     writeFile(fixture, 'docs/index.html', '<span>Agent Skill · v2.12.0</span>');
     writeFile(fixture, 'docs/start.html', '<span>Archify v2.12.0</span>');
 

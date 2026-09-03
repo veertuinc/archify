@@ -26,21 +26,16 @@ const startData = Object.fromEntries(Object.entries(START_RECIPE_IDS).map(([type
   if (!recipe || recipe.type !== type) {
     throw new Error(`Missing canonical start recipe ${JSON.stringify(id)} for ${type}.`);
   }
-  const enPrompts = startPromptsFor(recipe, 'en');
-  const zhPrompts = startPromptsFor(recipe, 'zh');
+  const prompts = startPromptsFor(recipe);
   return [type, {
     id: recipe.id,
     type: recipe.type,
     proof: recipe.proof,
     presentation: recipe.presentation,
-    en: {
-      ...recipe.en,
-      ...enPrompts,
-    },
-    zh: {
-      ...recipe.zh,
-      ...zhPrompts,
-    },
+    title: recipe.title,
+    question: recipe.question,
+    include: recipe.include,
+    ...prompts,
   }];
 }));
 

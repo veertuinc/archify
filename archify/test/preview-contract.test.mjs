@@ -11,7 +11,7 @@ const skill = fs.readFileSync(path.join(skillRoot, 'SKILL.md'), 'utf8');
 const delivery = fs.readFileSync(path.join(skillRoot, 'references', 'delivery-contract.md'), 'utf8');
 const readme = fs.readFileSync(path.join(repoRoot, 'README.md'), 'utf8');
 const english = fs.readFileSync(path.join(repoRoot, 'README_EN.md'), 'utf8');
-const chinese = fs.readFileSync(path.join(repoRoot, 'README_ZH.md'), 'utf8');
+const chinese = fs.readFileSync(path.join(repoRoot), 'utf8');
 
 test('preview contract: the skill keeps live preview explicit, desktop-only, and last-good', () => {
   assert.match(delivery, /archify\.mjs preview <type> <input>\.json <output>\.html/);

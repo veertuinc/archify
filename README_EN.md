@@ -1,8 +1,4 @@
 <p align="center">
-  <strong>English</strong> · <a href="./README_ZH.md">简体中文</a>
-</p>
-
-<p align="center">
   <a href="https://trendshift.io/repositories/31352?utm_source=repository-badge&amp;utm_medium=badge&amp;utm_campaign=badge-repository-31352" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/repositories/31352" alt="Archify on Trendshift" width="250" height="55"/></a>
 </p>
 
@@ -231,7 +227,7 @@ Settings:
 }
 ```
 
-`meta.locale=en|zh-CN` localizes page title, Legend, states/errors, a11y, HTML/SVG `lang`—never authored content. Otherwise omit; preserve requested-language copy; disclose English fallback. Static omits `animation`; `classic` defaults.
+Static omits `animation`; `classic` defaults.
 
 ## Explore and share the output
 
