@@ -29,8 +29,9 @@ test('export menu exposes Share Card title/branding toggle without stripping dia
   assert.match(template, /if \(!omitText\) \{[\s\S]*?ctx\.fillText\(fittedTitle/);
   assert.match(template, /if \(!omitText\) \{[\s\S]*?ctx\.fillText\(cardLabel/);
   assert.match(template, /var headerOffset = omitText[\s\S]*?SHARE_CARD_HEADER;/);
-  assert.match(template, /function cropShareCardFrame\(/);
-  assert.match(template, /if \(omitText\) \{[\s\S]*?cropShareCardFrame\(/);
+  assert.match(template, /if \(omitText\) \{[\s\S]*?tightCanvas\.width = data\.width;/);
+  assert.match(template, /var sourceScale = pickSafeScale\(vb\.width, vb\.height\);/);
+  assert.doesNotMatch(template, /Math\.min\(2, pickSafeScale/);
   assert.match(template, /data-last-export-omit-text/);
 });
 
