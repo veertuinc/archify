@@ -132,7 +132,7 @@ const MESSAGES = {
   'viewer.export.menu': "Export",
   'viewer.export.subtitle': "Portable, clean outputs",
   'viewer.export.omitText': "Hide title and branding",
-  'viewer.export.omitText.hint': "Share Card: drop the diagram title and ARCHIFY badge",
+  'viewer.export.omitText.hint': "Share Card: crop to diagram frame; no title or ARCHIFY badge",
   'viewer.export.share': "Share",
   'viewer.export.shareCard': "Share Card",
   'viewer.export.routeShareCard': "Route Share Card",

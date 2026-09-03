@@ -29,6 +29,8 @@ test('export menu exposes Share Card title/branding toggle without stripping dia
   assert.match(template, /if \(!omitText\) \{[\s\S]*?ctx\.fillText\(fittedTitle/);
   assert.match(template, /if \(!omitText\) \{[\s\S]*?ctx\.fillText\(cardLabel/);
   assert.match(template, /var headerOffset = omitText[\s\S]*?SHARE_CARD_HEADER;/);
+  assert.match(template, /function cropShareCardFrame\(/);
+  assert.match(template, /if \(omitText\) \{[\s\S]*?cropShareCardFrame\(/);
   assert.match(template, /data-last-export-omit-text/);
 });
 
@@ -46,7 +48,7 @@ test('rendered artifacts keep diagram labels in serializeSvg while Share Card om
 test('i18n defines Share Card title/branding copy', () => {
   const i18n = fs.readFileSync(path.join(skillRoot, 'renderers/shared/i18n.mjs'), 'utf8');
   assert.match(i18n, /'viewer\.export\.omitText': "Hide title and branding"/);
-  assert.match(i18n, /'viewer\.export\.omitText\.hint': "Share Card: drop the diagram title and ARCHIFY badge"/);
+  assert.match(i18n, /'viewer\.export\.omitText\.hint': "Share Card: crop to diagram frame; no title or ARCHIFY badge"/);
 });
 
 process.on('exit', () => fs.rmSync(tmp, { recursive: true, force: true }));

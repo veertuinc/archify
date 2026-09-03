@@ -65,7 +65,7 @@ test('Share Card uses contain-only canonical geometry with fixed safe areas', ()
 
 test('Share Card is a canonical PNG with exact receipt dimensions and filename', () => {
   const html = render('workflow');
-  assert.match(html, /recordExportReceipt\('share-card', blob, true, \{ width: SHARE_CARD_WIDTH, height: SHARE_CARD_HEIGHT \}\)/);
+  assert.match(html, /recordExportReceipt\('share-card', result\.blob, true, \{ width: result\.width, height: result\.height \}\)/);
   assert.match(html, /base \+ '-share-card\.png'/);
   assert.match(html, /data-last-export-width/);
   assert.match(html, /data-last-export-height/);
@@ -77,12 +77,12 @@ test('Copy Share Card reuses one canonical card blob and writes only PNG to the 
   const html = render('architecture');
   assert.match(html, /data-action="copy-share-card"/);
   assert.match(html, /Copy Share Card[\s\S]*?<small class="hint">PNG to clipboard<\/small>/);
-  assert.match(html, /function runCopyShareCard\(\)[\s\S]*?var blobPromise = rasterizeShareCard\(\);/);
+  assert.match(html, /function runCopyShareCard\(\)[\s\S]*?var shareCardPromise = rasterizeShareCard\(\);/);
   const copyBlock = html.match(/function runCopyShareCard\(\) \{[\s\S]*?\n      \}/)?.[0] || '';
   assert.equal((copyBlock.match(/rasterizeShareCard\(\)/g) || []).length, 1);
   assert.match(copyBlock, /writePngToClipboard\(blobPromise\)/);
   assert.match(html, /new ClipboardItem\(\{ 'image\/png': blobPromise \}\)/);
-  assert.match(copyBlock, /recordExportReceipt\('share-card', blob, true, \{ width: SHARE_CARD_WIDTH, height: SHARE_CARD_HEIGHT \}\)/);
+  assert.match(copyBlock, /recordExportReceipt\('share-card', result\.blob, true, \{ width: result\.width, height: result\.height \}\)/);
   assert.match(copyBlock, /toast\(viewerText\('viewer\.export\.copiedShare'\)\)/);
   assert.match(html, /copyShareCard: runCopyShareCard/);
 });

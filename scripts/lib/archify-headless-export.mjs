@@ -217,7 +217,8 @@ export async function exportDiagramArtifact(options = {}) {
       }
 
       if (format === 'share-card') {
-        return blobToResult(await Archify.exportMenu.shareCard());
+        var shareCard = await Archify.exportMenu.shareCard();
+        return blobToResult(shareCard && shareCard.blob ? shareCard.blob : shareCard);
       }
 
       if (format === 'webm') {

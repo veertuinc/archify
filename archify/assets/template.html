@@ -6507,6 +6507,23 @@
         return ctx;
       }
 
+      function cropShareCardFrame(canvas, drawX, drawY, drawWidth, drawHeight, label) {
+        var cropX = Math.max(0, Math.floor(drawX - 0.5));
+        var cropY = Math.max(0, Math.floor(drawY - 0.5));
+        var cropW = Math.min(canvas.width - cropX, Math.ceil(drawWidth + 1));
+        var cropH = Math.min(canvas.height - cropY, Math.ceil(drawHeight + 1));
+        var cropped = document.createElement('canvas');
+        cropped.width = cropW;
+        cropped.height = cropH;
+        var cropCtx = canvas2dOrThrow(cropped, label);
+        cropCtx.drawImage(canvas, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+        return { canvas: cropped, width: cropW, height: cropH };
+      }
+
+      function shareCardExportResult(blob, width, height) {
+        return { blob: blob, width: width, height: height };
+      }
+
       function renderShareCard(options) {
         options = options || {};
         var routeSnapshot = options.routeSnapshot || null;
@@ -6624,9 +6641,19 @@
               ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
               URL.revokeObjectURL(svgUrl);
 
-              canvas.toBlob(function (blob) {
+              var exportCanvas = canvas;
+              var exportWidth = SHARE_CARD_WIDTH;
+              var exportHeight = SHARE_CARD_HEIGHT;
+              if (omitText) {
+                var cropped = cropShareCardFrame(canvas, drawX, drawY, drawWidth, drawHeight, viewerText('viewer.export.shareCard'));
+                exportCanvas = cropped.canvas;
+                exportWidth = cropped.width;
+                exportHeight = cropped.height;
+              }
+
+              exportCanvas.toBlob(function (blob) {
                 if (!blob) reject(exportError('viewer.export.error.toBlobNull', { label: viewerText('viewer.export.shareCard') }));
-                else resolve(blob);
+                else resolve(shareCardExportResult(blob, exportWidth, exportHeight));
               }, 'image/png');
             } catch (error) {
               URL.revokeObjectURL(svgUrl);
@@ -7068,9 +7095,9 @@
         clearExportReceipt();
         if (format === 'webm') toast(viewerText('viewer.export.recording'));
         return (format === 'share-card'
-          ? rasterizeShareCard().then(function (blob) {
-              recordExportReceipt('share-card', blob, true, { width: SHARE_CARD_WIDTH, height: SHARE_CARD_HEIGHT });
-              download(blob, base + '-share-card.png');
+          ? rasterizeShareCard().then(function (result) {
+              recordExportReceipt('share-card', result.blob, true, { width: result.width, height: result.height });
+              download(result.blob, base + '-share-card.png');
               toast(viewerText('viewer.export.downloadedShare'));
             })
           : format === 'svg'
@@ -7117,11 +7144,11 @@
         var blobPromise = snapshot
           ? renderShareCard({ routeSnapshot: snapshot })
           : Promise.reject(exportError('viewer.export.routeRequired'));
-        return blobPromise.then(function (blob) {
-          recordExportReceipt('share-card', blob, false, { width: SHARE_CARD_WIDTH, height: SHARE_CARD_HEIGHT }, 'route', true);
-          download(blob, diagramFilename() + '-route-share-card.png');
+        return blobPromise.then(function (result) {
+          recordExportReceipt('share-card', result.blob, false, { width: result.width, height: result.height }, 'route', true);
+          download(result.blob, diagramFilename() + '-route-share-card.png');
           toast(viewerText('viewer.export.downloadedRoute'));
-          return blob;
+          return result.blob;
         }).catch(function (err) {
           console.error(err);
           var technicalMessage = err && err.message ? err.message : 'share-card';
@@ -7141,11 +7168,11 @@
         var blobPromise = snapshot
           ? renderShareCard({ reachSnapshot: snapshot })
           : Promise.reject(exportError('viewer.export.reachRequired'));
-        return blobPromise.then(function (blob) {
-          recordExportReceipt('share-card', blob, false, { width: SHARE_CARD_WIDTH, height: SHARE_CARD_HEIGHT }, 'reach', false, true);
-          download(blob, diagramFilename() + '-' + snapshot.direction + '-reach-share-card.png');
+        return blobPromise.then(function (result) {
+          recordExportReceipt('share-card', result.blob, false, { width: result.width, height: result.height }, 'reach', false, true);
+          download(result.blob, diagramFilename() + '-' + snapshot.direction + '-reach-share-card.png');
           toast(viewerText('viewer.export.downloadedReach'));
-          return blob;
+          return result.blob;
         }).catch(function (err) {
           console.error(err);
           var technicalMessage = err && err.message ? err.message : 'share-card';
@@ -7226,10 +7253,11 @@
           alert(viewerText('viewer.export.clipboardUnsupported.period'));
           return;
         }
-        var blobPromise = rasterizeShareCard();
+        var shareCardPromise = rasterizeShareCard();
+        var blobPromise = shareCardPromise.then(function (result) { return result.blob; });
         return writePngToClipboard(blobPromise).then(function () {
-          return blobPromise.then(function (blob) {
-            recordExportReceipt('share-card', blob, true, { width: SHARE_CARD_WIDTH, height: SHARE_CARD_HEIGHT });
+          return shareCardPromise.then(function (result) {
+            recordExportReceipt('share-card', result.blob, true, { width: result.width, height: result.height });
             toast(viewerText('viewer.export.copiedShare'));
           });
         }).catch(function (err) {
