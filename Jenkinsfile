@@ -41,12 +41,13 @@ pipeline {
 
           chmod +x "${DEPLOY_ROOT}/scripts/serve-gallery.sh" \
                    "${DEPLOY_ROOT}/scripts/run-preview.sh" \
+                   "${DEPLOY_ROOT}/scripts/refresh-library.sh" \
                    "${DEPLOY_ROOT}/scripts/refresh-library.mjs" || true
 
           # Library HTML artifacts are excluded from rsync; re-deliver them so
           # template/runtime changes (export menu, viewer chrome, etc.) land.
           if [ -f "${DEPLOY_ROOT}/var/library/manifest.json" ]; then
-            "${NODE_BIN:-node}" "${DEPLOY_ROOT}/scripts/refresh-library.mjs"
+            HOME="${HOME:-/home/veertu}" "${DEPLOY_ROOT}/scripts/refresh-library.sh"
           fi
 
           sudo cp "${DEPLOY_ROOT}/deploy/archify-library.service" \
