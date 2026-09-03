@@ -5847,18 +5847,6 @@
         }
       }
 
-      function withExportOmitText(opts) {
-        opts = opts || {};
-        if (exportOmitTextEnabled()) opts.omitText = true;
-        return opts;
-      }
-
-      function stripDiagramText(root) {
-        Array.prototype.forEach.call(root.querySelectorAll('text'), function (el) {
-          el.remove();
-        });
-      }
-
       if (omitTextInput) {
         try {
           var omitTextParam = new URLSearchParams(window.location.search).get('exportOmitText');
@@ -6409,8 +6397,6 @@
         clone.insertBefore(style, clone.firstChild);
         clone.insertBefore(bgRect, style.nextSibling);
 
-        if (opts.omitText) stripDiagramText(clone);
-
         return {
           svgString: new XMLSerializer().serializeToString(clone),
           width: vb.width * scale,
@@ -6454,7 +6440,7 @@
         var svg = document.querySelector('.diagram-container svg');
         var vb = svg.viewBox.baseVal;
         var scale = pickSafeScale(vb.width, vb.height);
-        var data = serializeSvg(scale, withExportOmitText());
+        var data = serializeSvg(scale);
         var svgBlob = new Blob([data.svgString], { type: 'image/svg+xml;charset=utf-8' });
         var svgUrl = URL.createObjectURL(svgBlob);
 
@@ -6530,11 +6516,10 @@
         var svg = document.querySelector('.diagram-container svg');
         var vb = svg.viewBox.baseVal;
         var sourceScale = Math.min(2, pickSafeScale(vb.width, vb.height));
-        var data = serializeSvg(sourceScale, withExportOmitText({
+        var data = serializeSvg(sourceScale, {
           routeSnapshot: routeSnapshot,
-          reachSnapshot: reachSnapshot,
-          omitText: omitText
-        }));
+          reachSnapshot: reachSnapshot
+        });
         if (!data.canonicalStateClean) return Promise.reject(exportError('viewer.export.error.viewerState'));
         if (routeSnapshot && !data.routeStateClean) return Promise.reject(exportError('viewer.export.error.routeState'));
         if (reachSnapshot && !data.reachStateClean) return Promise.reject(exportError('viewer.export.error.reachState'));
@@ -6596,19 +6581,25 @@
               ctx.fillStyle = bg;
               ctx.fillRect(0, 0, SHARE_CARD_WIDTH, SHARE_CARD_HEIGHT);
 
+              ctx.textBaseline = 'alphabetic';
+
               if (!omitText) {
                 ctx.fillStyle = accent;
                 ctx.fillRect(SHARE_CARD_PADDING, 27, 42, 3);
 
-                ctx.textBaseline = 'alphabetic';
                 ctx.fillStyle = text;
                 var fittedTitle = fitCanvasText(ctx, title, SHARE_CARD_WIDTH - SHARE_CARD_PADDING * 2 - 330, 29, 18, '700');
                 ctx.fillText(fittedTitle, SHARE_CARD_PADDING, 62);
+              }
 
+              if (subtitle) {
                 ctx.fillStyle = muted;
-                var fittedSubtitle = fitCanvasText(ctx, subtitle, SHARE_CARD_WIDTH - SHARE_CARD_PADDING * 2 - 280, 13, 11, '500');
-                ctx.fillText(fittedSubtitle, SHARE_CARD_PADDING, 87);
+                var subtitleMaxWidth = SHARE_CARD_WIDTH - SHARE_CARD_PADDING * 2 - (omitText ? 0 : 280);
+                var fittedSubtitle = fitCanvasText(ctx, subtitle, subtitleMaxWidth, 13, 11, '500');
+                ctx.fillText(fittedSubtitle, SHARE_CARD_PADDING, omitText ? 62 : 87);
+              }
 
+              if (!omitText) {
                 ctx.font = "600 12px 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
                 ctx.textAlign = 'right';
                 ctx.fillStyle = accent;
@@ -6617,7 +6608,9 @@
               }
 
               var availableWidth = SHARE_CARD_WIDTH - SHARE_CARD_PADDING * 2;
-              var headerOffset = omitText ? SHARE_CARD_PADDING : SHARE_CARD_HEADER;
+              var headerOffset = omitText
+                ? (subtitle ? 88 : SHARE_CARD_PADDING)
+                : SHARE_CARD_HEADER;
               var availableHeight = SHARE_CARD_HEIGHT - headerOffset - SHARE_CARD_PADDING;
               var fit = Math.min(availableWidth / data.width, availableHeight / data.height);
               var drawWidth = data.width * fit;
@@ -6703,7 +6696,7 @@
         var svg = document.querySelector('.diagram-container svg');
         var vb = svg.viewBox.baseVal;
         var scale = Math.min(1, 1280 / vb.width);
-        var data = serializeSvg(scale, withExportOmitText());
+        var data = serializeSvg(scale);
         var sourceUrl = URL.createObjectURL(new Blob([data.svgString], { type: 'image/svg+xml;charset=utf-8' }));
 
         function createMotionScene(root) {
@@ -7081,7 +7074,7 @@
               toast(viewerText('viewer.export.downloadedShare'));
             })
           : format === 'svg'
-          ? Promise.resolve(serializeSvg(1, withExportOmitText({ autoTheme: true }))).then(function (d) {
+          ? Promise.resolve(serializeSvg(1, { autoTheme: true })).then(function (d) {
               var blob = new Blob([d.svgString], { type: 'image/svg+xml;charset=utf-8' });
               recordExportReceipt('svg', blob, d.canonicalStateClean);
               download(blob, base + '.svg');

@@ -136,7 +136,7 @@ export const TOOLS = [
         theme: { type: 'string', description: 'Optional viewer theme.' },
         omitText: {
           type: 'boolean',
-          description: 'Strip diagram labels and Share Card branding from the export.',
+          description: 'Share Card only: hide the diagram title and ARCHIFY badge.',
         },
       },
       required: ['id', 'format'],

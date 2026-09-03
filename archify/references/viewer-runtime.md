@@ -26,7 +26,7 @@ Story transitions classify only the exact relationship between adjacent authored
 
 ## Canonical exports
 
-The export menu can copy/download full-diagram PNG, download JPEG/WebP, download a dual-theme SVG, and record a trace-enabled WebM. Use **Hide labels and branding** to strip node/edge text and the Share Card `ARCHIFY · PRESET · THEME` badge. Viewer state—Guide, Lens, finder, focus, route, story, camera, radar, presentation, motion ownership, and temporary overlays—must be removed from canonical export.
+The export menu can copy/download full-diagram PNG, download JPEG/WebP, download a dual-theme SVG, and record a trace-enabled WebM. **Hide title and branding** affects Share Card exports only: it removes the diagram title and the `ARCHIFY · PRESET · THEME` badge while keeping node and edge labels inside the diagram. Viewer state—Guide, Lens, finder, focus, route, story, camera, radar, presentation, motion ownership, and temporary overlays—must be removed from canonical export.
 
 ### Share Card
 
