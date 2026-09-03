@@ -7,6 +7,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const WATERMARK_CLASS = 'veertu-watermark';
+const WATERMARK_OPACITY = 0.35;
 const LOGO_VIEW_W = 783.009;
 const LOGO_VIEW_H = 188.156;
 const VIEWBOX_RE = /\bviewBox\s*=\s*["']([^"']+)["']/i;
@@ -49,7 +50,7 @@ function watermarkMarkup(viewBox) {
   const x = viewBox.minX + viewBox.width - targetW - pad;
   const y = viewBox.minY + viewBox.height - targetH - pad;
   const paths = loadLogoPaths();
-  return `<g class="${WATERMARK_CLASS}" data-veertu-logo="wordmark" aria-hidden="true" pointer-events="none" opacity="0.7" transform="translate(${x} ${y}) scale(${scale})">${paths}</g>`;
+  return `<g class="${WATERMARK_CLASS}" data-veertu-logo="wordmark" aria-hidden="true" pointer-events="none" opacity="${WATERMARK_OPACITY}" transform="translate(${x} ${y}) scale(${scale})">${paths}</g>`;
 }
 
 function stripWatermark(svg) {
